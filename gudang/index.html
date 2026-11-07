@@ -7,6 +7,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="PM Gudang">
 <link rel="manifest" href="manifest.json">
+<script src="../config.js"></script>
+<script src="../pin.js"></script><script src="../akses.js" data-role="gudang"></script>
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
@@ -46,7 +48,7 @@ nav div{max-width:480px;margin:0 auto;display:flex}nav button{flex:1;padding:8px
 <script>
 const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const K='pmg_v1',uid=()=>Math.random().toString(36).slice(2,9),pad=n=>String(n).padStart(2,'0');
-let S={reqs:[],name:''};try{const r=localStorage.getItem(K);if(r)S=Object.assign(S,JSON.parse(r))}catch(e){}
+let S={reqs:[],name:'',kode:'',seen:{},last:0};try{const r=localStorage.getItem(K);if(r)S=Object.assign(S,JSON.parse(r))}catch(e){}
 const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}};
 const today=()=>{const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())};
 const fd=s=>{if(!/^\d{4}-\d\d-\d\d$/.test(s||''))return s||'-';const[y,m,d]=s.split('-'),M=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];return d+' '+M[m-1]+' '+y};
@@ -72,21 +74,22 @@ return Object.values(R).map(r=>{const src=r.L.length?r.L:r.rk,o=[];src.forEach(x
 return{id:'r'+uid(),no:r.no,date:r.date,by:r.by,spk:r.spk,cust:[...new Set(Object.values(r.cust).join(',').split(',').map(x=>x.trim()).filter(Boolean))].join(', '),note:r.note,items:o,status:'open',recv:'',rdate:'',at:Date.now()}}).filter(r=>r.items.length)}
 
 function tst(m){const t=$('#tt');t.innerHTML='<span>'+esc(m)+'</span>';clearTimeout(tst.h);tst.h=setTimeout(()=>t.innerHTML='',3000)}
-function card(r){const d=r.status==='done',p=prog(r);return `<div class="card" data-a=v data-id=${r.id} style="cursor:pointer"><div class=t><div><b>${esc(r.no)}</b><small>${fd(r.date)} • ${esc(r.by||'-')}</small>${r.spk.length?`<small>SPK ${esc(r.spk.join(', '))}${r.cust?' • '+esc(r.cust):''}</small>`:''}</div><span class="pill ${d?'gr':cnt(r)?'am':'mu'}">${d?'Selesai':cnt(r)?'Sebagian':'Menunggu'}</span></div><div class=bar><i style="width:${p}%"></i></div><small class=mut style="margin-top:6px">${cnt(r)}/${r.items.length} item dicek • ${p}% sesuai${d?' • diterima '+fd(r.rdate)+' oleh '+esc(r.recv):''}</small></div>`}
+function card(r){const d=r.status==='done',p=prog(r);return `<div class="card" data-a=v data-id=${r.id} style="cursor:pointer"><div class=t><div><b>${esc(r.no)}</b><small>${fd(r.date)} • ${esc(r.by||'-')}</small>${r.spk.length?`<small>SPK ${esc(r.spk.join(', '))}${r.cust?' • '+esc(r.cust):''}</small>`:''}</div><span class="pill ${d?'gr':cnt(r)?'am':'mu'}">${d?'Selesai':cnt(r)?'Sebagian':'Menunggu'}</span></div><div class=bar><i style="width:${p}%"></i></div><small class=mut style="margin-top:6px">${cnt(r)}/${r.items.length} item dicek • ${p}% sesuai${d?' • diterima '+fd(r.rdate)+' oleh '+esc(r.recv):''}${r.ship?' • 🚚 dikirim':''}</small></div>`}
 function vList(){const op=S.reqs.filter(r=>r.status!=='done'),dn=S.reqs.filter(r=>r.status==='done'),L=V.tab==='open'?op:dn;
-return `<div class=g3><div class=card><b>${op.length}</b><small>Menunggu</small></div><div class=card><b>${op.filter(cnt).length}</b><small>Sebagian</small></div><div class=card><b>${dn.length}</b><small>Selesai</small></div></div>`+(L.map(card).join('')||`<div class="card em"><b>${V.tab==='open'?'Belum ada permintaan masuk':'Belum ada penerimaan selesai'}</b><br>${V.tab==='open'?'Di app permintaan tekan “Kirim ke Gudang”, atau buka tab Impor untuk memilih file.':''}</div>`)}
-function vImp(){return `<div class=seg><button class="${V.imp==='file'?'on':''}" data-a=im data-v=file>File</button><button class="${V.imp==='wa'?'on':''}" data-a=im data-v=wa>Tempel WhatsApp</button><button class="${V.imp==='man'?'on':''}" data-a=im data-v=man>Manual</button></div>`+(V.imp==='file'?`<div class=card><p class=hp>Di app permintaan tekan <b>Kirim ke Gudang</b>, lalu pilih <b>PM Gudang</b> di menu bagikan — file langsung masuk. Kalau file datang lewat cara lain (WhatsApp, email, flashdisk), pilih file <b>.pmg</b> di sini.</p>${V.err?`<p style="color:var(--red);margin:0 0 10px">${esc(V.err)}</p>`:''}<label class=btn for=pf style="margin:0">📂 Pilih file permintaan</label><input id=pf type=file accept=".pmg,.json,application/json" multiple hidden></div>`:V.imp==='wa'?`<div class=card><p class=hp>Di app permintaan: Dokumen → Kirim WhatsApp, salin pesannya, lalu tempel di sini. Bisa beberapa pesan (per SPK) sekaligus.</p><textarea id=wat placeholder="*PERMINTAAN PACKAGING*&#10;No: PM-...&#10;..."></textarea>${V.err?`<p style="color:var(--red);margin:8px 0 0">${esc(V.err)}</p>`:''}<div class=row><button class="btn s" data-a=pst>📋 Tempel</button><button class=btn data-a=ipw>Impor</button></div></div>`:`<div class=card><label>No. permintaan<input id=mn placeholder="PM-20261107-001"></label><label>Pemohon<input id=mb></label><label>Daftar item (satu per baris: nama : jumlah satuan)<textarea id=mi placeholder="PALLET SL : 20 pcs&#10;TALI : 3 roll"></textarea></label><button class=btn data-a=ipm>Simpan</button></div>`)}
+return (DB&&!okKode(S.kode)?`<div class=card data-a=tab data-v=imp style="cursor:pointer;background:var(--amb);border-color:#FDE68A"><b>Terima otomatis belum aktif</b><small class=mut>Ketuk untuk memasukkan kode gudang.</small></div>`:'')+`<div class=g3><div class=card><b>${op.length}</b><small>Menunggu</small></div><div class=card><b>${op.filter(cnt).length}</b><small>Sebagian</small></div><div class=card><b>${dn.length}</b><small>Selesai</small></div></div>`+(L.map(card).join('')||`<div class="card em"><b>${V.tab==='open'?'Belum ada permintaan masuk':'Belum ada penerimaan selesai'}</b><br>${V.tab==='open'?'Di app permintaan tekan “Kirim ke Gudang”, atau buka tab Impor untuk memilih file.':''}</div>`)}
+function vImp(){return gcard()+`<div class=seg><button class="${V.imp==='file'?'on':''}" data-a=im data-v=file>File</button><button class="${V.imp==='wa'?'on':''}" data-a=im data-v=wa>Tempel WhatsApp</button><button class="${V.imp==='man'?'on':''}" data-a=im data-v=man>Manual</button></div>`+(V.imp==='file'?`<div class=card><p class=hp>Di app permintaan tekan <b>Kirim ke Gudang</b>, lalu pilih <b>PM Gudang</b> di menu bagikan — file langsung masuk. Kalau file datang lewat cara lain (WhatsApp, email, flashdisk), pilih file <b>.pmg</b> di sini.</p>${V.err?`<p style="color:var(--red);margin:0 0 10px">${esc(V.err)}</p>`:''}<label class=btn for=pf style="margin:0">📂 Pilih file permintaan</label><input id=pf type=file accept=".pmg,.json,application/json" multiple hidden></div>`:V.imp==='wa'?`<div class=card><p class=hp>Di app permintaan: Dokumen → Kirim WhatsApp, salin pesannya, lalu tempel di sini. Bisa beberapa pesan (per SPK) sekaligus.</p><textarea id=wat placeholder="*PERMINTAAN PACKAGING*&#10;No: PM-...&#10;..."></textarea>${V.err?`<p style="color:var(--red);margin:8px 0 0">${esc(V.err)}</p>`:''}<div class=row><button class="btn s" data-a=pst>📋 Tempel</button><button class=btn data-a=ipw>Impor</button></div></div>`:`<div class=card><label>No. permintaan<input id=mn placeholder="PM-20261107-001"></label><label>Pemohon<input id=mb></label><label>Daftar item (satu per baris: nama : jumlah satuan)<textarea id=mi placeholder="PALLET SL : 20 pcs&#10;TALI : 3 roll"></textarea></label><button class=btn data-a=ipm>Simpan</button></div>`)}
 function vDet(){const r=S.reqs.find(x=>x.id===V.id);if(!r){V.id=null;return vList()}const d=r.status==='done';
 return `<div class=card><div class=t><div><b>${esc(r.no)}</b><small>${fd(r.date)} • Pemohon: ${esc(r.by||'-')}</small>${r.spk.length?`<small>SPK ${esc(r.spk.join(', '))}${r.cust?' • '+esc(r.cust):''}</small>`:''}${r.note?`<small>Catatan: ${esc(r.note)}</small>`:''}</div><span class="pill ${d?'gr':'am'}" id=ps>${d?'Selesai':'Proses'}</span></div><div class=bar><i id=pb style="width:${prog(r)}%"></i></div></div>`+
 `<div class=card>${r.items.map((l,i)=>{const[t,c]=ist(l);return `<div class=it><div class=t><div><b>${i+1}. ${esc(l.nm)}</b><small>Diminta: <b>${l.qty}</b> ${esc(l.unit)}</small></div><span class="pill ${c}" id=b_${l.id}>${t}</span></div>${d?`<small class=mut>Diterima: <b>${l.got===''?0:esc(l.got)}</b> ${esc(l.unit)}${l.note?' • '+esc(l.note):''}</small>`:`<div class=qr><input type=text inputmode=decimal data-g=${l.id} placeholder="Diterima (${esc(l.unit)})" value="${esc(l.got)}"><button data-a=ok data-id=${l.id}>Sesuai</button></div><input data-n=${l.id} placeholder="Catatan (rusak, kurang, dll.)" value="${esc(l.note)}" style="margin-top:8px;height:40px;font-size:13px">`}</div>`}).join('')}</div>`+
-(d?`<div class=card><small class=mut>Diterima ${fd(r.rdate)} oleh <b>${esc(r.recv)}</b></small></div><button class="btn w" data-a=wa>↗ Kirim Berita Acara WhatsApp</button><div class=row><button class="btn s" data-a=cp>📋 Salin</button><button class="btn s" data-a=ro>Buka lagi</button></div>`:`<div class=card><label>Nama penerima (gudang)<input id=rc value="${esc(r.recv||S.name)}" placeholder="Nama petugas gudang"></label><button class=btn data-a=fn>✔ Selesaikan Penerimaan</button><div class=row><button class="btn s" data-a=sv>Simpan sementara</button><button class="btn d" data-a=del data-id=${r.id}>🗑 Hapus</button></div></div>`)}
+(d?`<div class=card><small class=mut>Diterima ${fd(r.rdate)} oleh <b>${esc(r.recv)}</b></small></div>${shipCard(r)}<button class="btn w" data-a=wa>↗ Kirim Berita Acara WhatsApp</button><div class=row><button class="btn s" data-a=cp>📋 Salin</button><button class="btn s" data-a=ro>Buka lagi</button></div>`:`${shipCard(r)}<div class=card><label>Nama penerima (gudang)<input id=rc value="${esc(r.recv||S.name)}" placeholder="Nama petugas gudang"></label><button class=btn data-a=fn>✔ Selesaikan Penerimaan</button><div class=row><button class="btn s" data-a=sv>Simpan sementara</button><button class="btn d" data-a=del data-id=${r.id}>🗑 Hapus</button></div></div>`)}
 function ba(r){const L=r.items.map((l,i)=>{const g=l.got===''?0:num(l.got),[t]=ist(l);return `${i+1}. ${l.nm} : diminta ${l.qty}, diterima ${g} ${l.unit} (${t})${l.note?' - '+l.note:''}`});
 return `*BERITA ACARA PENERIMAAN PACKAGING*\nNo Permintaan: ${r.no}\n${r.spk.length?'SPK: '+r.spk.join(', ')+'\n':''}Pemohon: ${r.by||'-'}\nTgl terima: ${fd(r.rdate||today())}\nPenerima (Gudang): ${r.recv||'-'}\n\n`+L.join('\n')+(r.items.every(l=>ist(l)[1]==='gr')?'\n\nSemua item diterima sesuai.':'\n\nAda selisih, mohon ditindaklanjuti.')}
 function render(){const d=V.id,T=d?'Penerimaan':V.tab==='imp'?'Impor Permintaan':V.tab==='open'?'Menunggu Diterima':'Riwayat Penerimaan',nv=[['open','📦','Masuk'],['imp','＋','Impor'],['done','✔','Riwayat']];
 $('#app').innerHTML=`<header>${d?'<button class=back data-a=bk>←</button>':'<span class=lg>GD</span>'}<div><small>PM Gudang • penerimaan packaging</small><h1>${T}</h1></div></header>${d?vDet():V.tab==='imp'?vImp():vList()}<nav><div>${nv.map(n=>`<button class="${!d&&V.tab===n[0]?'on':''}" data-a=tab data-v=${n[0]}><span>${n[1]}</span>${n[2]}</button>`).join('')}</div></nav>`}
-function add(L){if(!L.length){V.err='Format pesan tidak dikenali. Pastikan pesan diawali *PERMINTAAN PACKAGING*.';render();return}
-let n=0,u=0,s=0;L.forEach(r=>{const x=S.reqs.find(q=>q.no===r.no);if(x&&x.status!=='done'){r.items.forEach(l=>{const f=x.items.find(z=>z.nm===l.nm&&z.unit===l.unit);if(!f)x.items.push(l)});r.spk.forEach(s=>{if(!x.spk.includes(s))x.spk.push(s)});u++}else if(!x){S.reqs.unshift(r);n++}else s++});
-save();V.err='';V.tab='open';V.id=null;render();tst(n+' permintaan baru'+(u?', '+u+' diperbarui':'')+(s?', '+s+' sudah selesai (dilewati)':''))}
+function add(L,quiet){if(!L.length){V.err='Format pesan tidak dikenali. Pastikan pesan diawali *PERMINTAAN PACKAGING*.';render();return}
+let n=0,u=0,s=0;L.forEach(r=>{const x=S.reqs.find(q=>q.no===r.no);if(x&&x.status!=='done'){r.items.forEach(l=>{const f=x.items.find(z=>z.nm===l.nm&&z.unit===l.unit);if(!f)x.items.push(l);else f.qty=l.qty});r.spk.forEach(s=>{if(!x.spk.includes(s))x.spk.push(s)});u++}else if(!x){S.reqs.unshift(r);n++}else s++});
+save();V.err='';const m=n+' permintaan baru'+(u?', '+u+' diperbarui':'')+(s?', '+s+' sudah selesai (dilewati)':'');
+if(quiet){if(!V.id&&V.tab!=='imp')render();tst('📦 '+m)}else{V.tab='open';V.id=null;render();tst(m)}}
 /* Impor file .pmg (JSON) dari tombol "Kirim ke Gudang" di app permintaan */
 function fromFile(o){if(!o||o.format!=='pm-gudang')throw 0;
 return(Array.isArray(o.requests)?o.requests:[o]).map(q=>({id:'r'+uid(),no:String(q.no||'').trim(),date:q.date||today(),by:String(q.by||''),spk:(q.spk||[]).map(String),cust:Array.isArray(q.cust)?q.cust.join(', '):String(q.cust||''),note:String(q.note||''),status:'open',recv:'',rdate:'',at:Date.now(),
@@ -94,24 +97,71 @@ items:(q.items||[]).map(l=>({id:uid(),nm:String(l.nm||'').trim(),unit:String(l.u
 async function impFiles(files){const L=[];let bad=0;for(const f of files){try{L.push(...fromFile(JSON.parse(await f.text())))}catch(e){bad++}}
 if(!L.length){V.err='File tidak dikenali. Gunakan file dari tombol “Kirim ke Gudang”.';V.tab='imp';V.imp='file';V.id=null;render();return}
 add(L);if(bad)setTimeout(()=>tst(bad+' file tidak dikenali, dilewati'),3300)}
-document.addEventListener('change',e=>{const t=e.target;if(t.id==='pf'&&t.files.length){impFiles([...t.files]);t.value=''}});
-async function boot(){render();
+document.addEventListener('change',async e=>{const t=e.target;if(t.id==='shc'||t.id==='shg'){const fs=[...t.files];t.value='';if(!fs.length)return;tst('Memproses foto…');for(const f of fs){if(SH.ph.length>=4){tst('Maksimal 4 foto');break}try{SH.ph.push(await photoFor(f))}catch(x){tst('Foto tidak bisa dibaca')}}render();return}if(t.id==='pf'&&t.files.length){impFiles([...t.files]);t.value=''}});
+/* Kirim ke lokasi: lokasi + foto tujuan packaging, diteruskan ke app permintaan lewat Firebase */
+const sid=n=>String(n).replace(/[.$#\[\]\/]/g,'_'),allOk=r=>r.items.length>0&&r.items.every(l=>ist(l)[1]==='gr'),dtx=iso=>new Date(iso).toLocaleString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+let SH={id:null,loc:'',ph:[]},shipping=false;
+function shrink(src,max,q){return new Promise((ok,no)=>{const f=typeof src!=='string',u=f?URL.createObjectURL(src):src,i=new Image();i.onload=()=>{const k=Math.min(1,max/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=Math.round(i.width*k);c.height=Math.round(i.height*k);c.getContext('2d').drawImage(i,0,0,c.width,c.height);if(f)URL.revokeObjectURL(u);ok(c.toDataURL('image/jpeg',q))};i.onerror=()=>{if(f)URL.revokeObjectURL(u);no()};i.src=u})}
+async function photoFor(file){let q=.7,d=await shrink(file,1280,q);while(d.length>380000&&q>.35){q-=.1;d=await shrink(file,1280,q)}return d}
+async function shipSend(r){const s=r.ship;if(!s)return false;if(s.ok)return true;if(!DB||!okKode(S.kode)||!s.ph||shipping)return false;shipping=true;
+try{const id=sid(r.no);let x=await fetch(DB+'/photos/'+S.kode+'/'+id+'.json',{method:'PUT',body:JSON.stringify(s.ph)});if(!x.ok)throw 0;
+x=await fetch(DB+'/outbox/'+S.kode+'/'+id+'.json',{method:'PUT',body:JSON.stringify({no:r.no,sent:s.sent,by:r.recv||'',loc:s.loc,n:s.ph.length,spk:r.spk,thumb:(s.th||[])[0]||''})});if(!x.ok)throw 0;
+s.ok=true;delete s.ph;save();return true}catch(e){return false}finally{shipping=false}}
+async function flushShip(){for(const r of S.reqs.filter(q=>q.ship&&!q.ship.ok)){if(await shipSend(r)){tst('✔ '+r.no+' terkirim ke bagian permintaan');if(V.id===r.id)render()}}}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)flushShip()});addEventListener('online',flushShip);setInterval(flushShip,60000);setTimeout(flushShip,1500);
+const thG=a=>`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0">${a}</div>`;
+function shipCard(r){const d=r.status==='done',ok=allOk(r);
+if(SH.id===r.id)return `<div class=card><b>Kirim ke lokasi</b><label>Lokasi tujuan<input id=shl value="${esc(SH.loc)}" placeholder="mis. Gudang jadi Line 2, area B" autocomplete=off></label><div class=row style="margin-top:0"><label class="btn s" for=shc style="margin:0">📷 Kamera</label><label class="btn s" for=shg style="margin:0">🖼 Galeri</label></div><input id=shc type=file accept="image/*" capture=environment hidden><input id=shg type=file accept="image/*" multiple hidden>${SH.ph.length?thG(SH.ph.map((x,i)=>`<div style="position:relative"><img src="${x}" alt="Foto ${i+1}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px"><button data-a=shd data-x=${i} aria-label=Hapus style="position:absolute;top:4px;right:4px;width:26px;height:26px;border-radius:50%;background:rgba(15,23,42,.75);color:#fff">✕</button></div>`).join('')):'<p class=hp style="margin:10px 0">Ambil foto lokasi tempat packaging diletakkan (1 sampai 4 foto).</p>'}<div class=row><button class="btn s" data-a=shx>Batal</button><button class=btn data-a=shs>🚚 Kirim</button></div></div>`;
+if(r.ship){const s=r.ship;return `<div class=card><b>${s.ok?'✔ Sudah dikirim ke lokasi':'🚚 Kirim ke lokasi'}</b><small class=mut>${dtx(s.sent)} • Lokasi: <b>${esc(s.loc)}</b></small>${s.ok?'':'<small style="color:var(--am);margin-top:4px;display:block">Belum terkirim ke bagian permintaan. Akan dicoba otomatis saat tersambung.</small>'}${(s.th||[]).length?thG(s.th.map(x=>`<img src="${x}" alt="Foto lokasi" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px">`).join('')):''}<button class="btn s" data-a=shr data-id=${r.id}>Ganti foto / lokasi</button></div>`}
+if(ok&&d)return `<div class=card><b>Kirim ke lokasi</b><p class=hp style="margin:2px 0 10px">Semua item sesuai. Foto lokasi tujuan packaging supaya bagian permintaan tahu di mana packaging berada.</p><button class=btn data-a=sh0 data-id=${r.id}>🚚 Kirim ke Lokasi</button></div>`;
+if(ok)return `<p class=hp style="margin:0 0 10px">Semua item sesuai. Selesaikan penerimaan untuk membuka fitur Kirim ke Lokasi.</p>`;return ''}
+/* Terima otomatis dari app permintaan lewat Firebase Realtime Database (alamat di ../config.js) */
+const DB=((window.PMG_CONFIG||{}).dbUrl||'').replace(/\/+$/,''),okKode=k=>/^[A-Za-z0-9]{10,}$/.test(k||'');
+let ES=null,pulling=false,again=false;
+async function pull(manual){if(!DB||!okKode(S.kode)){if(manual)tst(DB?'Isi kode gudang dulu':'Alamat database belum diisi (config.js)');return}
+if(pulling){again=true;return}pulling=true;
+try{const res=await fetch(DB+'/inbox/'+S.kode+'.json',{cache:'no-store'});if(!res.ok)throw new Error(res.status);
+const o=(await res.json())||{},L=[],now=Date.now();
+for(const[k,v]of Object.entries(o)){if(!v||typeof v!=='object'||!v.sent)continue;
+if(now-Date.parse(v.sent)>30*864e5){fetch(DB+'/inbox/'+S.kode+'/'+k+'.json',{method:'DELETE'}).catch(()=>{});continue}
+if(S.seen[k]===v.sent)continue;S.seen[k]=v.sent;
+try{L.push(...fromFile({format:'pm-gudang',requests:[v]}))}catch(e){}}
+S.last=now;save();if(L.length)add(L,!manual);else if(manual){tst('Tidak ada permintaan baru');render()}}
+catch(e){if(manual)tst('Gagal terhubung. Cek internet dan kode gudang.')}
+finally{pulling=false;if(again){again=false;pull()}}}
+function listen(){if(ES){ES.close();ES=null}if(!DB||!okKode(S.kode)||!window.EventSource)return;
+try{ES=new EventSource(DB+'/inbox/'+S.kode+'.json');const h=()=>pull();ES.addEventListener('put',h);ES.addEventListener('patch',h)}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)pull()});addEventListener('online',()=>{listen();pull()});setInterval(()=>pull(),60000);
+const lt=()=>S.last?new Date(S.last).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}):'-';
+const gcard=()=>`<div class=card><b>Terima otomatis</b><p class=hp style="margin:2px 0 10px">${!DB?'Alamat database belum diisi (config.js), jadi hanya bisa impor file.':okKode(S.kode)?'✔ Tersambung • terakhir cek '+lt()+'. Permintaan dari bagian permintaan masuk sendiri.':'Masukkan kode gudang yang sama dengan di app permintaan (Pengaturan).'}</p><label>Kode gudang<input id=gk value="${esc(S.kode)}" placeholder="min. 10 huruf/angka" autocapitalize=off autocomplete=off></label><div class=row><button class="btn s" data-a=gks>Simpan kode</button><button class="btn s" data-a=gpl>Cek sekarang</button></div></div>`;
+async function boot(){render();setTimeout(()=>{listen();pull()},300);
 if(new URLSearchParams(location.search).get('shared')){try{const c=await caches.open('pmg-share'),h=await c.match('shared/count'),n=h?+(await h.text()):0,fs=[];for(let i=0;i<n;i++){const r=await c.match('shared/'+i);if(r)fs.push(new File([await r.blob()],'x.pmg'))}await caches.delete('pmg-share');history.replaceState(null,'',location.pathname);if(fs.length)impFiles(fs)}catch(e){}}
 if('launchQueue'in window)launchQueue.setConsumer(async p=>{const fs=[];for(const h of p.files||[])fs.push(await h.getFile());if(fs.length)impFiles(fs)})}
 function collect(r){const c=$('#rc');if(c){r.recv=c.value.trim();if(r.recv)S.name=r.recv}save()}
 document.addEventListener('input',e=>{const t=e.target,r=S.reqs.find(x=>x.id===V.id);if(!r)return;
+if(t.id==='shl'){SH.loc=t.value;return}
 if(t.dataset.g){const l=r.items.find(x=>x.id===t.dataset.g);l.got=t.value.replace(/[^\d.,]/g,'');const[a,c]=ist(l),b=$('#b_'+l.id);b.textContent=a;b.className='pill '+c;$('#pb').style.width=prog(r)+'%';save()}
 else if(t.dataset.n){r.items.find(x=>x.id===t.dataset.n).note=t.value;save()}});
 document.addEventListener('click',async e=>{const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a,r=S.reqs.find(x=>x.id===(b.dataset.id||V.id));
-if(a==='tab'){V.tab=b.dataset.v;V.id=null;V.err='';render();scrollTo(0,0)}
-else if(a==='v'){V.id=b.dataset.id;render();scrollTo(0,0)}
-else if(a==='bk'){V.id=null;render()}
+if(a==='tab'){SH.id=null;V.tab=b.dataset.v;V.id=null;V.err='';render();scrollTo(0,0)}
+else if(a==='v'){SH.id=null;V.id=b.dataset.id;render();scrollTo(0,0)}
+else if(a==='bk'){SH.id=null;V.id=null;render()}
 else if(a==='im'){V.imp=b.dataset.v;V.err='';render()}
 else if(a==='pst'){try{$('#wat').value=await navigator.clipboard.readText()}catch(x){tst('Izin tempel ditolak, tempel manual')}}
+else if(a==='gks'){const v=($('#gk').value||'').replace(/\s/g,'');if(!okKode(v)){tst('Kode minimal 10 huruf/angka, tanpa spasi');return}if(v!==S.kode){S.kode=v;S.seen={}}save();listen();await pull(true);render()}
+else if(a==='sh0'){SH={id:r.id,loc:'',ph:[]};render()}
+else if(a==='shr'){SH={id:r.id,loc:r.ship?r.ship.loc:'',ph:[]};render()}
+else if(a==='shx'){SH.id=null;render()}
+else if(a==='shd'){SH.ph.splice(+b.dataset.x,1);render()}
+else if(a==='shs'){const rr=S.reqs.find(x=>x.id===SH.id),loc=SH.loc.trim();if(!rr)return;if(!SH.ph.length){tst('Tambahkan minimal 1 foto lokasi');return}if(!loc){tst('Isi lokasi tujuan');return}
+const th=[];for(const x of SH.ph.slice(0,3))th.push(await shrink(x,160,.6));
+rr.ship={sent:new Date().toISOString(),loc,ph:SH.ph.slice(),th};SH={id:null,loc:'',ph:[]};save();render();
+const ok=await shipSend(rr);render();tst(ok?'✔ Terkirim ke bagian permintaan':!DB||!okKode(S.kode)?'Tersimpan. Isi kode gudang agar terkirim ke bagian permintaan.':'Belum terkirim. Cek internet dan aturan Firebase; akan dicoba lagi otomatis.')}
+else if(a==='gpl'){await pull(true);render()}
 else if(a==='ipw')add(parse($('#wat').value));
 else if(a==='ipm'){const no=$('#mn').value.trim(),it=$('#mi').value.split('\n').map(s=>s.match(/^\s*(.+?)\s*:\s*([\d.,]+)\s*(\S*)\s*$/)).filter(Boolean).map(m=>({id:uid(),nm:m[1].toUpperCase(),qty:num(m[2]),unit:m[3]||'pcs',got:'',note:''}));
 if(!no||!it.length){tst('Isi no. permintaan dan minimal 1 item (nama : jumlah satuan)');return}add([{id:'r'+uid(),no,date:today(),by:$('#mb').value.trim(),spk:[],cust:'',note:'',items:it,status:'open',recv:'',rdate:'',at:Date.now()}])}
-else if(a==='ok'){const l=r.items.find(x=>x.id===b.dataset.id);l.got=String(l.qty);save();render()}
+else if(a==='ok'){const rq=S.reqs.find(x=>x.id===V.id),l=rq&&rq.items.find(x=>x.id===b.dataset.id);if(!l)return;l.got=String(l.qty);save();render()}
 else if(a==='sv'){collect(r);tst('Tersimpan')}
 else if(a==='fn'){collect(r);if(!r.recv){tst('Isi nama penerima');return}const k=r.items.filter(l=>ist(l)[1]!=='gr').length;if(k&&!confirm(k+' item belum sesuai jumlahnya (item kosong dihitung 0). Tetap selesaikan?'))return;r.status='done';r.rdate=today();r.at=Date.now();save();render();tst('Penerimaan selesai')}
 else if(a==='ro'){r.status='open';save();render()}

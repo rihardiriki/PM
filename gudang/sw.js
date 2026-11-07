@@ -1,5 +1,5 @@
 // Service worker PM Gudang — naikkan VERSION setiap ada update agar cache diperbarui
-const VERSION = 'v2';
+const VERSION = 'v6';
 const CACHE = 'pm-gudang-' + VERSION;
 const CORE = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png'];
 self.addEventListener('install', e => {
@@ -24,6 +24,7 @@ self.addEventListener('fetch', e => {
     return;
   }
   if (req.method !== 'GET') return;
+  if (/\/(config|pin)\.js$/.test(new URL(req.url).pathname)) return;
   if (req.mode === 'navigate') {
     e.respondWith(fetch(req).then(res => { const c = res.clone(); caches.open(CACHE).then(x => x.put('./index.html', c)); return res; }).catch(() => caches.match('./index.html')));
     return;
