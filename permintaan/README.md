@@ -33,7 +33,11 @@ Jumlah lembar A4 mengikuti isi dokumen, tidak dipaksa 1 lembar. Ukuran huruf tet
 
 ## Kirim ke Gudang
 
-Di tab Dokumen ada tombol **📦 Kirim ke Gudang**. Tombol ini membuat file `NO-PERMINTAAN.pmg` (JSON) berisi no. permintaan, tanggal, pemohon, daftar SPK, customer, catatan, dan item (digabung per nama + satuan). Di HP, menu bagikan terbuka: pilih **PM Gudang** dan file langsung masuk ke app gudang. Jika menu bagikan file tidak tersedia, file diunduh dan bisa dibuka lewat tab Impor di app gudang. App gudang harus versi v2 ke atas.
+Di tab Dokumen ada tombol **📦 Kirim ke Gudang**. Tombol ini membuat file `NO-PERMINTAAN.pmg` (JSON) berisi no. permintaan, tanggal, pemohon, daftar SPK, customer, catatan, dan item (digabung per nama + satuan). Di HP, menu bagikan terbuka: pilih **PM Gudang** dan file langsung masuk ke app gudang. Jika menu bagikan file tidak tersedia, file diunduh dan bisa dibuka lewat tab Impor di app gudang. App gudang harus versi v2 ke atas. Jika `config.js` (dbUrl) sudah diisi (lihat `FIREBASE.md` di root repositori), tombol ini mengirim langsung dan permintaan muncul otomatis di app gudang tanpa file.
+
+## Sudah Dikirim
+
+Setelah gudang menyelesaikan penerimaan (semua item sesuai) dan menekan **Kirim ke Lokasi**, lokasi dan foto muncul di Beranda → **Sudah Dikirim** (badge angka menandai yang baru). Butuh sambungan Firebase (lihat `FIREBASE.md`).
 
 ## Upload ke GitHub
 
