@@ -1,5 +1,5 @@
 // Service worker PM Packaging — ubah VERSION setiap kali ada update agar cache diperbarui
-const VERSION = 'v24';
+const VERSION = 'v28';
 const CACHE = 'pm-packaging-' + VERSION;
 const CORE = [
   './',
@@ -32,6 +32,7 @@ self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
+  if (url.origin === location.origin && /\/(config|pin)\.js$/.test(url.pathname)) return;
 
   // Halaman: network-first, fallback ke cache (offline)
   if (req.mode === 'navigate') {
