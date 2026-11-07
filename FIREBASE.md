@@ -72,7 +72,7 @@ Tidak ada kode yang perlu dimasukkan. Kedua app memakai jalur data tetap (`jalur
 
 # Login akun: PM Permintaan hanya untuk packing, PM Gudang hanya untuk gudang
 
-Setelah langkah ini, data di database (permintaan, info pengiriman, foto) hanya bisa dibuka oleh akun yang terdaftar. Kode gudang tetap dipakai seperti biasa. Sebelum `apiKey` diisi, app memakai PIN dari `pin.js`.
+Setelah langkah ini, data di database (permintaan, info pengiriman, foto) hanya bisa dibuka oleh akun yang terdaftar. Sebelum `apiKey` diisi, app memakai PIN dari `pin.js`.
 
 ## A. Aktifkan login
 1. Firebase Console → **Build → Authentication → Get started → Sign-in method → Email/Password → Enable → Save**.
@@ -91,6 +91,13 @@ Realtime Database → tab **Rules** → ganti seluruh isi dengan ini → **Publi
   "rules": {
     "roles": {
       "$uid": { ".read": "auth != null && auth.uid === $uid", ".write": false }
+    },
+    "pw": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "newData.isNumber()"
+      }
     },
     "inbox": {
       "$kode": {
@@ -128,6 +135,16 @@ Realtime Database → tab **Rules** → ganti seluruh isi dengan ini → **Publi
    - `gudang` → hanya PM Gudang
    - `semua` → keduanya (untuk admin)
    (nilai berupa teks, contoh: `packing`)
+
+## D. Sandi dibuat sendiri dan kedaluwarsa 6 bulan
+Aturan `pw` di langkah B wajib dipasang. Cara kerjanya:
+- Admin membuat akun dengan **sandi sementara** (langkah C) lalu memberi tahu user.
+- Saat **login pertama**, app meminta user membuat sandi barunya sendiri (minimal 8 karakter, harus ada huruf dan angka). Sandi sementara tidak berlaku lagi.
+- Tanggal ganti sandi disimpan di `pw/<UID>`. Jika sudah lebih dari **180 hari**, user diminta membuat sandi baru lagi sebelum bisa masuk. Batas hari bisa diubah dengan `sandiHari` di `config.js` (mis. `sandiHari: 90`).
+- Tombol **Ganti sandi** di halaman depan memungkinkan user mengganti sandi kapan saja.
+- **Memaksa user ganti sandi:** hapus node `pw/<UID>` di Realtime Database. Login berikutnya (maksimal sekitar 1 jam untuk yang sedang masuk) meminta sandi baru.
+- **Lupa sandi:** email `@pm-packaging.local` tidak nyata, jadi tidak ada email reset. Admin membuka Authentication → Users → titik tiga → **Reset password** tidak akan terkirim; gantinya hapus akun lalu buat ulang dengan sandi sementara dan pasang lagi `roles/<UID baru>`.
+- Batas 6 bulan dicek di app (sisi browser), bukan di server.
 
 ## Mencabut akses
 Hapus node `roles/UID` atau nonaktifkan akun di Authentication. Perangkat orang tersebut otomatis keluar paling lambat sekitar 1 jam, dan sejak itu datanya tidak bisa dibuka lagi.

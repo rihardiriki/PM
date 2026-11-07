@@ -15,9 +15,6 @@
 <script src="config.js"></script>
 <script src="pin.js"></script>
 <script src="akses.js"></script>
-<script src="config.js"></script>
-<script src="pin.js"></script>
-<script src="akses.js"></script>
 <style>
 :root{
   --pri:#2548D0;--prd:#1E3A8A;--pri2:#4766E5;--pb:#EFF6FF;
@@ -177,6 +174,7 @@ footer{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-betw
 
   <footer>
     <span class="stat" id="stat"><i></i><span id="statTxt">Mode file</span></span>
+    <button class="out" id="chg" type="button" style="margin-left:auto;margin-right:8px">Ganti sandi</button>
     <button class="out" id="out" type="button">Keluar</button>
   </footer>
 </div>
@@ -188,6 +186,8 @@ footer{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-betw
     <p id="ms">Masukkan PIN.</p>
     <input id="usr" type="text" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Nama pengguna" aria-label="Nama pengguna">
     <input id="pin" type="password" autocomplete="current-password" autocapitalize="off" placeholder="PIN" aria-label="PIN">
+    <input id="np1" type="password" autocomplete="new-password" autocapitalize="off" placeholder="Sandi baru (min. 8, huruf dan angka)" aria-label="Sandi baru" style="display:none;margin-top:10px">
+    <input id="np2" type="password" autocomplete="new-password" autocapitalize="off" placeholder="Ulangi sandi baru" aria-label="Ulangi sandi baru" style="display:none;margin-top:10px">
     <div class="er" id="er" role="alert"></div>
     <div class="bt"><button type="button" class="cn" id="cn">Batal</button><button type="submit" class="ok">Masuk</button></div>
   </form>
@@ -209,38 +209,65 @@ footer{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-betw
   var A=window.PMG_AKSES, FB=A.mode==='firebase', tiles=[].slice.call(document.querySelectorAll('.tile'));
   var ovl=document.getElementById('ovl'), box=document.getElementById('box'), pin=document.getElementById('pin'), usr=document.getElementById('usr'), er=document.getElementById('er'), okb=box.querySelector('.ok');
   var cur=null, nxt='', q=new URLSearchParams(location.search);
+  var np1=document.getElementById('np1'), np2=document.getElementById('np2'), chg=document.getElementById('chg'), mode='login', forced=false;
   usr.style.display=FB?'':'none';
   pin.placeholder=FB?'Kata sandi':'PIN';
   function paint(){
     tiles.forEach(function(t){t.classList.toggle('open',A.ok(t.dataset.role))});
     document.getElementById('out').style.display=A.any()?'inline-block':'none';
+    chg.style.display=FB?'inline-block':'none';
   }
-  function open(t){
+  function setMode(m,f,msg){
+    mode=m; forced=!!f;
+    var c=m==='change';
+    np1.style.display=np2.style.display=c?'':'none';
+    np1.value=np2.value='';
+    usr.style.display=FB&&!(c&&forced)?'':'none';
+    pin.style.display=c&&forced?'none':'';
+    pin.placeholder=FB?(c?'Sandi lama':'Kata sandi'):'PIN';
+    okb.textContent=c?'Simpan sandi':'Masuk';
+    document.getElementById('ms').textContent=msg||(c?'Ganti sandi akun Anda.':(FB?'Masuk dengan akun Anda.':'Masukkan PIN untuk masuk.'));
+  }
+  function open(t,m){
     cur=t; er.textContent=''; pin.value=''; usr.value='';
+    setMode(m||'login');
     box.style.setProperty('--cc',getComputedStyle(t).getPropertyValue('--cc'));
     document.getElementById('mt').textContent=t.dataset.name;
-    document.getElementById('ms').textContent=FB?'Masuk dengan akun Anda.':'Masukkan PIN untuk masuk.';
     ovl.classList.add('on'); setTimeout(function(){(FB?usr:pin).focus()},60);
   }
   function close(){ovl.classList.remove('on');cur=null}
   tiles.forEach(function(t){
     t.addEventListener('click',function(e){ if(A.ok(t.dataset.role))return; e.preventDefault(); open(t); });
   });
+  function enter(t){
+    var href=t.getAttribute('href');
+    if(nxt&&q.get('r')===t.dataset.role)href+=nxt;
+    location.href=href;
+  }
+  function fail(msg,el){
+    er.textContent=msg; if(el)el.select();
+    box.classList.remove('shake'); void box.offsetWidth; box.classList.add('shake');
+  }
   box.addEventListener('submit',function(e){
     e.preventDefault(); if(!cur||okb.disabled)return;
-    var t=cur; okb.disabled=true; okb.textContent='Memeriksa...'; er.textContent='';
+    var t=cur, lbl=okb.textContent; okb.disabled=true; okb.textContent='Memeriksa...'; er.textContent='';
+    function done(){okb.disabled=false; okb.textContent=lbl}
+    if(mode==='change'){
+      if(np1.value!==np2.value){done();fail('Ulangi sandi baru dengan sama persis.',np2);return}
+      A.changePw(t.dataset.role,usr.value,pin.value,np1.value).then(function(r){
+        done();
+        if(r.ok)enter(t); else fail(r.msg,np1);
+      });
+      return;
+    }
     A.login(t.dataset.role,usr.value,pin.value).then(function(r){
-      okb.disabled=false; okb.textContent='Masuk';
-      if(r.ok){
-        var href=t.getAttribute('href');
-        if(nxt&&q.get('r')===t.dataset.role)href+=nxt;
-        location.href=href;
-      }else{
-        er.textContent=r.msg; (FB&&!usr.value?usr:pin).select();
-        box.classList.remove('shake'); void box.offsetWidth; box.classList.add('shake');
-      }
+      done();
+      if(r.ok)enter(t);
+      else if(r.change){setMode('change',true,r.msg);np1.focus()}
+      else fail(r.msg,FB&&!usr.value?usr:pin);
     });
   });
+  chg.addEventListener('click',function(){ if(tiles[0])open(tiles[0],'change') });
   document.getElementById('cn').addEventListener('click',close);
   ovl.addEventListener('click',function(e){if(e.target===ovl)close()});
   document.addEventListener('keydown',function(e){if(e.key==='Escape')close()});
