@@ -1,3 +1,256 @@
-<!DOCTYPE html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PM Packaging</title>
-<style>body{margin:0;font:16px system-ui,sans-serif;background:#F8FAFC;display:grid;place-items:center;min-height:100vh}main{width:min(420px,100% - 32px)}a{display:block;margin:12px 0;padding:18px;border-radius:14px;background:#fff;border:1px solid #E2E8F0;color:#0F172A;text-decoration:none;font-weight:600}small{display:block;color:#64748B;font-weight:400;margin-top:2px}</style></head>
-<body><main><a href="permintaan/">📋 PM Permintaan<small>Buat permintaan packaging</small></a><a href="gudang/">📦 PM Gudang<small>Terima & cek packaging</small></a></main></body></html>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>PM Packaging – Permintaan &amp; Gudang</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Sistem permintaan dan penerimaan material packing per SPK.">
+<meta name="theme-color" content="#1E3A8A">
+<meta name="color-scheme" content="light">
+<link rel="icon" type="image/png" href="permintaan/favicon-32.png">
+<link rel="apple-touch-icon" href="permintaan/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"></noscript>
+<script src="config.js"></script>
+<script src="pin.js"></script>
+<script src="akses.js"></script>
+<script src="config.js"></script>
+<script src="pin.js"></script>
+<script src="akses.js"></script>
+<style>
+:root{
+  --pri:#2548D0;--prd:#1E3A8A;--pri2:#4766E5;--pb:#EFF6FF;
+  --gr:#059669;--grd:#047857;--grb:#ECFDF5;--am:#FFB020;
+  --bg:#F8FAFC;--card:#fff;--bd:#E2E8F0;--tx:#0F172A;--tx2:#475569;--mut:#94A3B8;--sub:#F1F5F9;
+  color-scheme:light;box-sizing:border-box;
+}
+*,*::before,*::after{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{margin:0;min-height:100vh;min-height:100dvh;color:#fff;background:#1E3A8A;font:400 15px/24px 'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+
+/* ---------- LATAR (memenuhi seluruh layar) ---------- */
+.bg{position:fixed;inset:0;z-index:0;pointer-events:none;background:
+  radial-gradient(60vmax 60vmax at 100% -10%,rgba(255,176,32,.26),rgba(255,176,32,0) 60%),
+  radial-gradient(55vmax 55vmax at -10% 110%,rgba(120,150,255,.38),rgba(120,150,255,0) 60%),
+  linear-gradient(135deg,#16296B 0%,#1E3A8A 35%,#2548D0 80%,#4766E5 100%)}
+.bg::after{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.055) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.055) 1px,transparent 1px);background-size:40px 40px;-webkit-mask-image:radial-gradient(ellipse at 50% 0%,#000 0%,transparent 75%);mask-image:radial-gradient(ellipse at 50% 0%,#000 0%,transparent 75%)}
+
+/* ---------- KERANGKA ---------- */
+.stage{position:relative;z-index:1;width:100%;max-width:1080px;min-height:100vh;min-height:100dvh;margin:0 auto;display:flex;flex-direction:column;
+  padding:calc(env(safe-area-inset-top,0px) + 18px) max(20px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 16px) max(20px,env(safe-area-inset-left,0px))}
+.brand{display:flex;align-items:center;gap:12px}
+.brand svg{width:44px;height:44px;flex:none;filter:drop-shadow(0 6px 10px rgba(11,31,92,.4))}
+.brand b{font-size:17px;line-height:22px;font-weight:800;letter-spacing:.2px}
+.mid{flex:1;display:flex;flex-direction:column;justify-content:center;padding:28px 0}
+h1{margin:0 0 20px;font-size:clamp(28px,5vw,52px);line-height:1.1;font-weight:800;letter-spacing:-.5px}
+h1 span{color:var(--am)}
+
+/* ---------- KARTU (HP: baris ringkas) ---------- */
+.menu{display:grid;gap:12px;grid-template-columns:1fr}
+.tile{position:relative;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:14px;color:var(--tx);background:var(--card);border-radius:20px;padding:16px;min-height:92px;overflow:hidden;
+  box-shadow:0 14px 34px -12px rgba(8,20,70,.55),0 2px 6px -2px rgba(8,20,70,.2);transition:transform .22s ease,box-shadow .22s ease;opacity:0;transform:translateY(14px);animation:rise .6s cubic-bezier(.2,.7,.2,1) forwards}
+.tile:nth-child(2){animation-delay:.1s}
+.tile::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--c)}
+.tile::after{content:"";position:absolute;right:-60px;top:-60px;width:180px;height:180px;border-radius:50%;background:var(--cb);pointer-events:none}
+.tile>*{position:relative;z-index:1}
+.tile.req{--c:linear-gradient(180deg,var(--pri2),var(--prd));--cc:var(--pri);--cb:radial-gradient(circle,#E3EAFF,rgba(227,234,255,0) 68%)}
+.tile.wh{--c:linear-gradient(180deg,#10B981,var(--grd));--cc:var(--gr);--cb:radial-gradient(circle,#D1FAE5,rgba(209,250,229,0) 68%)}
+.ico{position:relative;width:52px;height:52px;border-radius:15px;display:grid;place-items:center;color:#fff;box-shadow:0 8px 16px -6px var(--cc)}
+.req .ico{background:linear-gradient(135deg,var(--prd),var(--pri2))}
+.wh .ico{background:linear-gradient(135deg,var(--grd),#10B981)}
+.ico>svg{width:26px;height:26px}
+.lock{position:absolute;right:-6px;bottom:-6px;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;color:var(--cc);background:#fff;border:1.5px solid var(--bd)}
+.lock svg{width:11px;height:11px}
+.tile.open .lock{color:#fff;background:var(--cc);border-color:#fff}
+.txt{min-width:0}
+.tile h2{margin:0;font-size:18px;line-height:24px;font-weight:800;letter-spacing:-.2px}
+.tile .sub{margin:0;color:var(--tx2);font-size:13px;line-height:20px}
+.go{display:flex;align-items:center;justify-content:center;gap:8px;width:40px;height:40px;border-radius:50%;color:#fff;font-weight:700;font-size:15px}
+.req .go{background:linear-gradient(135deg,var(--pri),var(--prd))}
+.wh .go{background:linear-gradient(135deg,var(--gr),var(--grd))}
+.go .gt{display:none}
+.go svg{width:18px;height:18px;flex:none;transition:transform .2s ease}
+.tile:hover,.tile:focus-visible{transform:translateY(-3px)}
+.tile:hover .go svg,.tile:focus-visible .go svg{transform:translateX(3px)}
+.tile:active{transform:translateY(-1px)}
+.tile:focus-visible{outline:3px solid var(--am);outline-offset:3px}
+
+/* ---------- BAWAH ---------- */
+footer{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;min-height:32px;font-size:12px;line-height:18px}
+.stat{display:inline-flex;align-items:center;gap:7px;font-weight:600;color:#E6EBFF;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);border-radius:99px;padding:4px 12px}
+.stat i{width:8px;height:8px;border-radius:50%;background:var(--am);box-shadow:0 0 0 3px rgba(255,176,32,.25)}
+.stat.on i{background:#34D399;box-shadow:0 0 0 3px rgba(52,211,153,.25)}
+.out{border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);border-radius:99px;font:inherit;font-size:12px;font-weight:600;color:#fff;cursor:pointer;padding:4px 14px;display:none}
+
+/* ---------- LOGIN ---------- */
+.ovl{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(15,23,42,.55);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+.ovl.on{display:flex}
+.box{color:var(--tx);width:100%;max-width:340px;background:#fff;border-radius:22px;padding:24px;box-shadow:0 24px 60px -12px rgba(15,23,42,.4)}
+.box .bi{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;color:#fff;background:var(--cc,var(--pri));margin-bottom:14px}
+.box .bi svg{width:24px;height:24px}
+.box h3{margin:0;font-size:19px;line-height:26px;font-weight:800}
+.box p{margin:2px 0 14px;color:var(--tx2);font-size:13px;line-height:20px}
+.box input{width:100%;height:50px;border:1.5px solid var(--bd);border-radius:12px;padding:0 14px;font:inherit;font-size:16px;letter-spacing:2px;background:var(--bg);color:var(--tx);outline:0}
+.box input:focus{border-color:var(--cc,var(--pri));background:#fff}
+#usr{letter-spacing:0;margin-bottom:8px}
+.box .er{min-height:20px;margin:6px 2px 8px;color:#DC2626;font-size:12px;font-weight:600}
+.box .bt{display:flex;gap:10px}
+.box button{flex:1;height:48px;border-radius:12px;font:inherit;font-weight:700;font-size:14px;cursor:pointer;border:0}
+.box button:disabled{opacity:.6;cursor:default}
+.box .ok{background:var(--cc,var(--pri));color:#fff}
+.box .cn{background:var(--sub);color:var(--tx2)}
+.box.shake{animation:shake .35s}
+@keyframes shake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+.out{border:0;background:none;font:inherit;font-size:12px;font-weight:600;color:var(--pri);cursor:pointer;padding:4px 0;display:none}
+
+@keyframes rise{to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.tile{animation:none;opacity:1;transform:none}.tile,.go svg{transition:none}}
+
+/* ---------- HP kecil ---------- */
+@media (max-width:359px){
+  .stage{padding-left:14px;padding-right:14px}
+  .tile{gap:10px;padding:14px}.ico{width:46px;height:46px}.tile h2{font-size:16px}
+}
+/* ---------- HP mendatar / layar pendek ---------- */
+@media (max-height:520px){
+  .mid{padding:12px 0}h1{margin-bottom:12px;font-size:26px}.brand svg{width:36px;height:36px}
+  .menu{grid-template-columns:1fr 1fr}.tile{min-height:0;padding:12px;gap:10px}.ico{width:44px;height:44px}.go{display:none}.tile{grid-template-columns:auto 1fr}
+}
+/* ---------- TABLET dan lebih besar: kartu tegak, dua kolom ---------- */
+@media (min-width:720px) and (min-height:521px){
+  .stage{padding-top:calc(env(safe-area-inset-top,0px) + 28px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 24px)}
+  .brand svg{width:50px;height:50px}.brand b{font-size:19px}
+  h1{margin-bottom:28px}
+  .menu{grid-template-columns:1fr 1fr;gap:22px}
+  .tile{grid-template-columns:1fr;align-items:stretch;gap:0;padding:28px;min-height:clamp(260px,34vh,340px);border-radius:26px}
+  .tile::before{left:0;right:0;top:0;bottom:auto;width:auto;height:6px}
+  .tile::after{right:-80px;top:-80px;width:240px;height:240px}
+  .ico{width:clamp(58px,6vw,72px);height:clamp(58px,6vw,72px);border-radius:20px;margin-bottom:auto}
+  .ico>svg{width:55%;height:55%}
+  .lock{width:26px;height:26px;right:-8px;bottom:-8px}.lock svg{width:13px;height:13px}
+  .txt{margin:20px 0 22px}
+  .tile h2{font-size:clamp(22px,2.4vw,30px);line-height:1.2}
+  .tile .sub{margin-top:4px;font-size:clamp(14px,1.4vw,16px);line-height:24px}
+  .go{width:auto;height:52px;border-radius:15px}
+  .go .gt{display:inline}
+  .tile:hover,.tile:focus-visible{transform:translateY(-5px)}
+}
+@media (min-width:1500px) and (min-height:700px){
+  .stage{max-width:1200px}
+  .tile{padding:36px}
+}
+</style>
+</head>
+<body>
+<div class="bg" aria-hidden="true"></div>
+<div class="stage">
+  <header class="brand">
+    <svg viewBox="0 0 512 512" aria-hidden="true">
+        <ellipse cx="256" cy="430" rx="128" ry="18" fill="#0B1F5C" opacity=".28"/>
+        <polygon points="112,173 256,256 256,422 112,339" fill="#DCE6FF"/>
+        <polygon points="256,256 400,173 400,339 256,422" fill="#B3C3FF"/>
+        <polygon points="256,90 400,173 256,256 112,173" fill="#FFFFFF"/>
+        <polygon points="201.3,121.5 345.3,204.5 310.7,224.5 166.7,141.5" fill="#FFB020"/>
+        <polygon points="345.3,204.5 310.7,224.5 310.7,300.8 345.3,280.9" fill="#E08A00"/>
+        <polyline points="146.6,275.9 172.5,324.1 224.3,287.5" fill="none" stroke="#2548D0" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    <b>PM Packaging</b>
+  </header>
+
+  <main class="mid">
+    <h1>Pilih <span>aplikasi</span></h1>
+    <nav class="menu" aria-label="Pilih aplikasi">
+    <a class="tile req" href="permintaan/" data-role="packing" data-name="PM Permintaan">
+      <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2.5"/><path d="M9 4.5V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v.5"/><path d="M9 10h6M9 14h6M9 18h3"/></svg><span class="lock"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span></div>
+      <div class="txt"><h2>PM Permintaan</h2><p class="sub">Buat permintaan packaging.</p></div>
+      <span class="go"><span class="gt">Buka PM Permintaan</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+    </a>
+    <a class="tile wh" href="gudang/" data-role="gudang" data-name="PM Gudang">
+      <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8.2 12 3 3 8.2v7.6L12 21l9-5.2z"/><path d="M3.3 8.3 12 13.3l8.7-5"/><path d="M12 13.3V21"/><path d="m8.5 5.2 8.6 5"/></svg><span class="lock"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span></div>
+      <div class="txt"><h2>PM Gudang</h2><p class="sub">Terima dan cek packaging.</p></div>
+      <span class="go"><span class="gt">Buka PM Gudang</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+    </a>
+    </nav>
+  </main>
+
+  <footer>
+    <span class="stat" id="stat"><i></i><span id="statTxt">Mode file</span></span>
+    <button class="out" id="out" type="button">Keluar</button>
+  </footer>
+</div>
+
+<div class="ovl" id="ovl" role="dialog" aria-modal="true" aria-labelledby="mt">
+  <form class="box" id="box" autocomplete="off">
+    <div class="bi" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div>
+    <h3 id="mt">PM Permintaan</h3>
+    <p id="ms">Masukkan PIN.</p>
+    <input id="usr" type="text" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Nama pengguna" aria-label="Nama pengguna">
+    <input id="pin" type="password" autocomplete="current-password" autocapitalize="off" placeholder="PIN" aria-label="PIN">
+    <div class="er" id="er" role="alert"></div>
+    <div class="bt"><button type="button" class="cn" id="cn">Batal</button><button type="submit" class="ok">Masuk</button></div>
+  </form>
+</div>
+
+<script>
+(function(){
+  try{
+    var on = !!(window.PMG_CONFIG && window.PMG_CONFIG.dbUrl);
+    var s = document.getElementById('stat');
+    if(on) s.classList.add('on');
+    document.getElementById('statTxt').textContent = on ? 'Sinkron online aktif' : 'Mode file';
+    document.getElementById('yr').textContent = new Date().getFullYear();
+  }catch(e){}
+})();
+</script>
+<script>
+(function(){
+  var A=window.PMG_AKSES, FB=A.mode==='firebase', tiles=[].slice.call(document.querySelectorAll('.tile'));
+  var ovl=document.getElementById('ovl'), box=document.getElementById('box'), pin=document.getElementById('pin'), usr=document.getElementById('usr'), er=document.getElementById('er'), okb=box.querySelector('.ok');
+  var cur=null, nxt='', q=new URLSearchParams(location.search);
+  usr.style.display=FB?'':'none';
+  pin.placeholder=FB?'Kata sandi':'PIN';
+  function paint(){
+    tiles.forEach(function(t){t.classList.toggle('open',A.ok(t.dataset.role))});
+    document.getElementById('out').style.display=A.any()?'inline-block':'none';
+  }
+  function open(t){
+    cur=t; er.textContent=''; pin.value=''; usr.value='';
+    box.style.setProperty('--cc',getComputedStyle(t).getPropertyValue('--cc'));
+    document.getElementById('mt').textContent=t.dataset.name;
+    document.getElementById('ms').textContent=FB?'Masuk dengan akun Anda.':'Masukkan PIN untuk masuk.';
+    ovl.classList.add('on'); setTimeout(function(){(FB?usr:pin).focus()},60);
+  }
+  function close(){ovl.classList.remove('on');cur=null}
+  tiles.forEach(function(t){
+    t.addEventListener('click',function(e){ if(A.ok(t.dataset.role))return; e.preventDefault(); open(t); });
+  });
+  box.addEventListener('submit',function(e){
+    e.preventDefault(); if(!cur||okb.disabled)return;
+    var t=cur; okb.disabled=true; okb.textContent='Memeriksa...'; er.textContent='';
+    A.login(t.dataset.role,usr.value,pin.value).then(function(r){
+      okb.disabled=false; okb.textContent='Masuk';
+      if(r.ok){
+        var href=t.getAttribute('href');
+        if(nxt&&q.get('r')===t.dataset.role)href+=nxt;
+        location.href=href;
+      }else{
+        er.textContent=r.msg; (FB&&!usr.value?usr:pin).select();
+        box.classList.remove('shake'); void box.offsetWidth; box.classList.add('shake');
+      }
+    });
+  });
+  document.getElementById('cn').addEventListener('click',close);
+  ovl.addEventListener('click',function(e){if(e.target===ovl)close()});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')close()});
+  document.getElementById('out').addEventListener('click',function(){A.logout();paint()});
+  window.addEventListener('pageshow',paint);
+  paint();
+  var n=q.get('n'); if(n&&(n[0]==='?'||n[0]==='#'))nxt=n;
+  var r=q.get('r');
+  if(r){ var t=tiles.filter(function(x){return x.dataset.role===r})[0]; if(t&&!A.ok(r))open(t); history.replaceState(null,'',location.pathname); }
+})();
+</script>
+</body>
+</html>
