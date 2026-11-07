@@ -57,13 +57,11 @@ window.PMG_CONFIG = { dbUrl: 'https://NAMA-default-rtdb.asia-southeast1.firebase
 ```
 → **Commit changes**. Tunggu centang hijau di tab **Actions**.
 
-## 5. Pasang kode gudang
-1. App **Permintaan** → Pengaturan → **Kode gudang** → ketuk **🎲 Buat kode acak**. Catat kodenya.
-2. App **Gudang** → tab **Impor** → isi **Kode gudang** dengan kode yang sama → **Simpan kode**.
-3. Selesai. Tombol **📦 Kirim ke Gudang** sekarang langsung mengirim; permintaan muncul sendiri di tab **Masuk** gudang.
+## 5. Selesai
+Tidak ada kode yang perlu dimasukkan. Kedua app memakai jalur data tetap (`jalur` di `config.js`). Tombol **📦 Kirim ke Gudang** langsung mengirim; permintaan muncul sendiri di tab **Masuk** gudang.
 
 ## Catatan
-- Kode adalah kunci akses. Jangan dibagikan ke orang di luar tim. Jika bocor, buat kode baru dan masukkan ulang di kedua app.
+- Jalur data ditentukan oleh `jalur` di `config.js` (minimal 10 huruf/angka). Siapa pun yang tahu alamat database dan jalur ini bisa membaca data. Jika perlu lebih aman, pakai login akun.
 - Permintaan yang dikirim ulang (nomor sama) memperbarui jumlah item di gudang, selama penerimaannya belum selesai.
 - Data lebih dari 30 hari dibersihkan otomatis oleh app gudang.
 - Jika internet mati saat menekan tombol, app memakai cara file (menu bagikan / unduh) sebagai cadangan.
