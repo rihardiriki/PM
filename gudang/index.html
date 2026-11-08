@@ -297,7 +297,7 @@ function shrink(src,max,q){return new Promise((ok,no)=>{const f=typeof src!=='st
 async function photoFor(file){let q=.7,d=await shrink(file,1280,q);while(d.length>380000&&q>.35){q-=.1;d=await shrink(file,1280,q)}return d}
 async function shipSend(r){const s=r.ship;if(!s)return false;if(s.ok)return true;if(!DB||!s.ph||shipping)return false;shipping=true;
 try{const id=sid(r.no);let x=await fetch(DB+'/photos/'+KODE+'/'+id+'.json',{method:'PUT',body:JSON.stringify(s.ph)});if(!x.ok)throw 0;
-x=await fetch(DB+'/outbox/'+KODE+'/'+id+'.json',{method:'PUT',body:JSON.stringify({no:r.no,sent:s.sent,by:r.recv||'',loc:s.loc,n:s.ph.length,spk:r.spk,thumb:(s.th||[])[0]||''})});if(!x.ok)throw 0;
+x=await fetch(DB+'/outbox/'+KODE+'/'+id+'.json',{method:'PUT',body:JSON.stringify({no:r.no,sent:s.sent,by:r.recv||'',loc:s.loc,n:s.ph.length,spk:r.spk,items:r.items.map(l=>({nm:l.nm,unit:l.unit,qty:l.qty,got:l.got===''||l.got==null?'':num(l.got),note:String(l.note||'')})),thumb:(s.th||[])[0]||''})});if(!x.ok)throw 0;
 s.ok=true;delete s.ph;save();return true}catch(e){return false}finally{shipping=false}}
 async function flushShip(){for(const r of S.reqs.filter(q=>q.ship&&!q.ship.ok)){if(await shipSend(r)){tst('✔ '+r.no+' terkirim ke bagian permintaan');if(V.id===r.id)render()}}}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)flushShip()});addEventListener('online',flushShip);setInterval(flushShip,60000);setTimeout(flushShip,1500);
