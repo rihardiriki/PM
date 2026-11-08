@@ -60,6 +60,7 @@
     return A.ok('packing')||A.ok('gudang');
   };
   A.logout=function(){rm(SK);rm(PK)};
+  A.user=function(){var s=rd(SK);return FB&&s&&s.name?String(s.name):''};
 
   /* Masuk. Mengembalikan Promise {ok:true} atau {ok:false,msg:'...'} */
   A.login=function(role,user,pass){
