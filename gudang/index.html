@@ -151,7 +151,7 @@ function listHtml(){const L=S.reqs.filter(r=>(V.tab==='open')===(r.status!=='don
 return L.map(card).join('')||`<div class="card em"><b>${f?'Tidak ada yang cocok':V.tab==='open'?'Belum ada permintaan masuk':'Belum ada penerimaan selesai'}</b>${f?'Ubah kata kunci atau filter.':V.tab==='open'?(DB?'Permintaan dari bagian permintaan masuk sendiri saat tombol “Kirim ke Gudang” ditekan.':'Alamat database belum diisi (config.js), jadi permintaan belum bisa masuk otomatis.'):''}</div>`}
 function vList(){const op=S.reqs.filter(r=>r.status!=='done'),dn=S.reqs.filter(r=>r.status==='done'),o=V.tab==='open',
 fl=o?[['all','Semua'],['wait','Belum dicek'],['part','Sebagian']]:[['all','Semua'],['short','Ada kekurangan']];
-return `<div class=hero><small>PENERIMAAN PACKAGING</small><h2>Halo, ${esc(S.name||'Petugas Gudang')} 👋</h2><p>${op.length?op.length+' permintaan menunggu diterima':'Tidak ada permintaan menunggu'}</p><div class=sy>${!DB?'● Database belum diisi (config.js)':'● Tersambung • cek terakhir '+lt()}</div><div class=hr><div class=seg><button class="${o?'on':''}" data-a=tab data-v=open>Masuk</button><button class="${!o?'on':''}" data-a=tab data-v=done>Riwayat</button></div><button class=rf data-a=gpl>↻ Cek sekarang</button></div></div>`+
+return `<div class=hero><small>PENERIMAAN PACKAGING</small><h2>Halo, ${esc(S.name||'Petugas Gudang')} 👋</h2><p>${op.length?op.length+' permintaan menunggu diterima':'Tidak ada permintaan menunggu'}</p><div class=sy>${!DB?'● Database belum diisi (config.js)':PERR?'● ⚠ '+esc(PERR):'● Tersambung • cek terakhir '+lt()}</div><div class=hr><div class=seg><button class="${o?'on':''}" data-a=tab data-v=open>Masuk</button><button class="${!o?'on':''}" data-a=tab data-v=done>Riwayat</button></div><button class=rf data-a=gpl>↻ Cek sekarang</button></div></div>`+
 `<div class=g3><div class=card><b>${op.filter(r=>!cnt(r)).length}</b><small>Menunggu</small></div><div class=card><b>${op.filter(cnt).length}</b><small>Sebagian</small></div><div class=card><b>${dn.length}</b><small>Selesai</small></div></div>`+
 `<div class=srch><input id=qs type=search placeholder="Cari no. permintaan, SPK, customer, item" value="${esc(V.q||'')}" autocomplete=off></div><div class=chips>${fl.map(x=>`<button class="chip ${V.f===x[0]?'on':''}" data-a=fl data-v=${x[0]}>${x[1]}</button>`).join('')}</div><div id=lst>${listHtml()}</div>`}
 /* Rekap kekurangan penerimaan */
@@ -203,17 +203,17 @@ if(d)return `<div class=card><b>Kirim ke lokasi</b><p class=hp style="margin:2px
 if(ok)return `<p class=hp style="margin:0 0 10px">Semua item sesuai. Selesaikan penerimaan untuk membuka fitur Kirim ke Lokasi.</p>`;return ''}
 /* Terima otomatis dari app permintaan lewat Firebase Realtime Database (alamat di ../config.js) */
 const DB=((window.PMG_CONFIG||{}).dbUrl||'').replace(/\/+$/,''),KODE=(window.PMG_CONFIG||{}).jalur||'pmpackaging2026';
-let ES=null,pulling=false,again=false;
+let ES=null,pulling=false,again=false,PERR='';
 async function pull(manual){if(!DB){if(manual)tst('Alamat database belum diisi (config.js)');return}
 if(pulling){again=true;return}pulling=true;
-try{const res=await fetch(DB+'/inbox/'+KODE+'.json',{cache:'no-store'});if(!res.ok)throw new Error(res.status);
+try{const res=await fetch(DB+'/inbox/'+KODE+'.json',{cache:'no-store'});if(!res.ok){PERR=(res.status===401||res.status===403)?'Ditolak server ('+res.status+'), login ulang':'Error server ('+res.status+')';throw new Error(res.status)}PERR='';
 const o=(await res.json())||{},L=[],now=Date.now();
 for(const[k,v]of Object.entries(o)){if(!v||typeof v!=='object'||!v.sent)continue;
 if(now-Date.parse(v.sent)>30*864e5){fetch(DB+'/inbox/'+KODE+'/'+k+'.json',{method:'DELETE'}).catch(()=>{});continue}
-if(S.seen[k]===v.sent)continue;S.seen[k]=v.sent;
-try{L.push(...fromFile({format:'pm-gudang',requests:[v]}))}catch(e){}}
+if(S.seen[k]===v.sent)continue;
+try{const f=fromFile({format:'pm-gudang',requests:[v]});L.push(...f);S.seen[k]=v.sent}catch(e){}}
 S.last=now;save();if(L.length)add(L,!manual);else if(manual){tst('Tidak ada permintaan baru');render()}}
-catch(e){if(manual)tst('Gagal terhubung. Cek internet.')}
+catch(e){if(!PERR)PERR='Tidak ada internet';if(manual)tst(PERR==='Tidak ada internet'?'Gagal terhubung. Cek internet.':'Gagal: '+PERR);if(!V.id)render()}
 finally{pulling=false;if(again){again=false;pull()}}}
 function listen(){if(ES){ES.close();ES=null}if(!DB||!window.EventSource)return;
 try{ES=new EventSource(DB+'/inbox/'+KODE+'.json');const h=()=>pull();ES.addEventListener('put',h);ES.addEventListener('patch',h)}catch(e){}}
