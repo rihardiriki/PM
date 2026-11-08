@@ -579,7 +579,7 @@ return `<small class=hp style="margin:0 0 10px">Lokasi, foto, serta item dan jum
 function mkpdf(r){const{jsPDF}=window.jspdf,B=blocks(r),one=!B.some(b=>b.s),M=10,PW=210,PH=297,W=PW-2*M,GAP=5,MM=.3528,co=S.profile.co||'';
 const info=[['No. Permintaan',r.no],['Tanggal',fd(r.date)],['Pemohon',(r.name||'-')+(r.dept?' ('+r.dept+')':'')],one?['Tujuan / No. Ref',r.ref||'-']:['Jumlah SPK',String(B.length)]];
 const run=(k,cols,draw)=>{const d=new jsPDF({unit:'mm',format:'a4'}),F=8.5*k,LH=F*MM*1.15,SM=F*.8,SLH=SM*MM*1.15,pad=.8*k,bl=z=>z*MM*.92,cw=(W-GAP*(cols-1))/cols,hh=LH+2*pad,bh=LH+1.4;
-const UC=x=>Array.isArray(x)?x.map(UC):String(x).toUpperCase(),_tx=d.text.bind(d),_sp=d.splitTextToSize.bind(d);d.text=(t,...a)=>_tx(UC(t),...a);d.splitTextToSize=(t,...a)=>_sp(UC(t),...a);
+const UC=x=>Array.isArray(x)?x.map(UC):String(x).toUpperCase(),_tx=d.text.bind(d),_sp=d.splitTextToSize.bind(d);d.text=(t,...a)=>_tx(UC(t),...a);d.splitTextToSize=(t,...a)=>_sp(UC(t),...a);const _gw=d.getTextWidth.bind(d);d.getTextWidth=(t,...a)=>_gw(UC(t),...a);
 let ok=true,ci=0,cy=M,top=M,bot=PH-M;const FOOT=6;
 const dr=f=>{if(draw&&ok)f()},sf=(z,b)=>{d.setFontSize(z);d.setFont('helvetica',b?'bold':'normal')},dark=()=>d.setTextColor(15,23,42),X=()=>M+ci*(cw+GAP);
 sf(F,0);dark();d.setLineWidth(.2);
