@@ -52,11 +52,11 @@ h1 span{color:var(--am)}
 .tile::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--c)}
 .tile::after{content:"";position:absolute;right:-60px;top:-60px;width:180px;height:180px;border-radius:50%;background:var(--cb);pointer-events:none}
 .tile>*{position:relative;z-index:1}
-.tile.req{--c:linear-gradient(180deg,var(--pri2),var(--prd));--cc:var(--pri);--cb:radial-gradient(circle,#E3EAFF,rgba(227,234,255,0) 68%)}
-.tile.wh{--c:linear-gradient(180deg,#10B981,var(--grd));--cc:var(--gr);--cb:radial-gradient(circle,#D1FAE5,rgba(209,250,229,0) 68%)}
+.tile.req{--c:linear-gradient(180deg,#F97316,#9A3412);--cc:#D9480F;--cb:radial-gradient(circle,#FFE8CC,rgba(255,232,204,0) 68%)}
+.tile.wh{--c:linear-gradient(180deg,#4766E5,#1E3A8A);--cc:#2548D0;--cb:radial-gradient(circle,#E3EAFF,rgba(227,234,255,0) 68%)}
 .ico{position:relative;width:52px;height:52px;border-radius:15px;display:grid;place-items:center;color:#fff;box-shadow:0 8px 16px -6px var(--cc)}
-.req .ico{background:linear-gradient(135deg,var(--prd),var(--pri2))}
-.wh .ico{background:linear-gradient(135deg,var(--grd),#10B981)}
+.req .ico{background:linear-gradient(135deg,#9A3412,#F97316)}
+.wh .ico{background:linear-gradient(135deg,#1E3A8A,#4766E5)}
 .ico>svg{width:26px;height:26px}
 .lock{position:absolute;right:-6px;bottom:-6px;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;color:var(--cc);background:#fff;border:1.5px solid var(--bd)}
 .lock svg{width:11px;height:11px}
@@ -65,8 +65,8 @@ h1 span{color:var(--am)}
 .tile h2{margin:0;font-size:18px;line-height:24px;font-weight:800;letter-spacing:-.2px}
 .tile .sub{margin:0;color:var(--tx2);font-size:13px;line-height:20px}
 .go{display:flex;align-items:center;justify-content:center;gap:8px;width:40px;height:40px;border-radius:50%;color:#fff;font-weight:700;font-size:15px}
-.req .go{background:linear-gradient(135deg,var(--pri),var(--prd))}
-.wh .go{background:linear-gradient(135deg,var(--gr),var(--grd))}
+.req .go{background:linear-gradient(135deg,#D9480F,#9A3412)}
+.wh .go{background:linear-gradient(135deg,#2548D0,#1E3A8A)}
 .go .gt{display:none}
 .go svg{width:18px;height:18px;flex:none;transition:transform .2s ease}
 .tile:hover,.tile:focus-visible{transform:translateY(-3px)}
@@ -80,6 +80,8 @@ footer{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-betw
 .stat i{width:8px;height:8px;border-radius:50%;background:var(--am);box-shadow:0 0 0 3px rgba(255,176,32,.25)}
 .stat.on i{background:#34D399;box-shadow:0 0 0 3px rgba(52,211,153,.25)}
 .out{border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);border-radius:99px;font:inherit;font-size:12px;font-weight:600;color:#fff;cursor:pointer;padding:4px 14px;display:none}
+
+.copy{margin:10px 0 0;text-align:center;font-size:12px;line-height:18px;color:rgba(230,235,255,.75)}
 
 /* ---------- LOGIN ---------- */
 .ovl{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(15,23,42,.55);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
@@ -177,6 +179,7 @@ footer{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-betw
     <button class="out" id="chg" type="button" style="margin-left:auto;margin-right:8px">Ganti sandi</button>
     <button class="out" id="out" type="button">Keluar</button>
   </footer>
+  <p class="copy">&copy; 2026 PM Packaging. All rights reserved.</p>
 </div>
 
 <div class="ovl" id="ovl" role="dialog" aria-modal="true" aria-labelledby="mt">
@@ -200,7 +203,6 @@ footer{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-betw
     var s = document.getElementById('stat');
     if(on) s.classList.add('on');
     document.getElementById('statTxt').textContent = on ? 'Sinkron online aktif' : 'Mode file';
-    document.getElementById('yr').textContent = new Date().getFullYear();
   }catch(e){}
 })();
 </script>
