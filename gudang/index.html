@@ -211,9 +211,9 @@ return `<div class=card><b>Rekap PDF Permintaan &amp; Penerimaan</b><p class=hp 
 function rkPreset(k){const t=today(),y=+t.slice(0,4),m=+t.slice(5,7),f=(Y,M,D)=>Y+'-'+pad(M)+'-'+pad(D);
 if(k==='bi'){V.from=f(y,m,1);V.to=t}else if(k==='bl'){const pm=m===1?12:m-1,py=m===1?y-1:y;V.from=f(py,pm,1);V.to=f(py,pm,new Date(py,pm,0).getDate())}else{V.from=f(y,1,1);V.to=t}}
 function jsPdfReady(){return window.jspdf?Promise.resolve(true):new Promise(ok=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';s.onload=()=>ok(!!window.jspdf);s.onerror=()=>ok(false);document.head.appendChild(s)})}
-function mkRekPdf(a,b){const{jsPDF}=window.jspdf,d=new jsPDF({unit:'mm',format:'a4'}),M=12,PW=210,PH=297,W=PW-2*M,R=rngRows(a,b),FB=PH-M-6,LH=4.2;let y=M;
+function mkRekPdf(a,b){const{jsPDF}=window.jspdf,d=new jsPDF({unit:'mm',format:'a4'}),M=12,PW=210,PH=297,W=PW-2*M,R=rngRows(a,b),FB=PH-M-6,LH=4.2;let y=M;const UC=x=>Array.isArray(x)?x.map(UC):String(x).toUpperCase(),_tx=d.text.bind(d);d.text=(t,...r)=>_tx(UC(t),...r);
 const X=[M+1.5,0,0,0,0,0],CW=[68,14,20,20,22,40],tw=CW.reduce((p,c)=>p+c,0),sc=(W-3)/tw;CW.forEach((c,i)=>CW[i]=c*sc);let ax=M+1.5;CW.forEach((c,i)=>{X[i]=ax;ax+=c});
-const txt=(t,w,fs,st)=>{d.setFont('helvetica',st||'normal');d.setFontSize(fs);return d.splitTextToSize(String(t),w)};
+const txt=(t,w,fs,st)=>{d.setFont('helvetica',st||'normal');d.setFontSize(fs);return d.splitTextToSize(String(t).toUpperCase(),w)};
 const col=(r,g,bl)=>d.setTextColor(r,g,bl),fill=(r,g,bl)=>d.setFillColor(r,g,bl);
 const ND=x=>x==null?'-':String(rd2(x));
 function title(){d.setFont('helvetica','bold');d.setFontSize(9);col(100,116,139);d.text(CO,M,y+2);y+=4;d.setFontSize(14);col(30,58,138);d.text('REKAP PERMINTAAN & PENERIMAAN GUDANG',M,y+5);y+=11;
@@ -247,10 +247,21 @@ y+=5});
 /* Total per item */
 const T={};R.forEach(r=>r.items.forEach(l=>{const k=String(l.nm).trim().toLowerCase()+'|'+String(l.unit).trim().toLowerCase(),t=T[k]||(T[k]={nm:l.nm,u:l.unit,q:0,g:0,s:0,n:0});t.q+=l.qty;const g=got(l);if(g!==null)t.g+=g;if(r.status==='done')t.s+=short(l);t.n++}));
 const TL=Object.values(T).sort((p,q)=>String(p.nm).localeCompare(String(q.nm)));
-if(y+30>FB){d.addPage();y=M}sec('B. Total per Item (seluruh periode)');
-const HT=['Item','Sat','Diminta','Diterima','Kurang','Jumlah permintaan'];colHead(HT);
-TL.forEach(t=>{const c={nm:t.nm,u:t.u,q:rd2(t.q),g:ND(rd2(t.g)),s:t.s>0?'-'+ND(rd2(t.s)):'0',bad:t.s>0,ok:t.s===0,k:t.n+' kali'};
-if(y+row(c)>FB){d.addPage();y=M;colHead(HT)}drawRow(c)})}
+d.addPage();y=M;sec('B. Total per Item (seluruh periode)');
+d.setFont('helvetica','normal');d.setFontSize(8);col(100,116,139);d.text('Dikelompokkan per jenis item. Tiap kelompok dihitung dari seluruh permintaan pada periode ini.',M,y+1);y+=6;
+const baseOf=nm=>{const s=String(nm).trim();if(/^pallet plastik/i.test(s))return 'Pallet Plastik';if(/^layer besi/i.test(s))return 'Layer Besi';if(/^pal/i.test(s))return 'Pallet';if(/^pboard/i.test(s))return 'Pboard';if(/^fly/i.test(s))return 'Flywood';if(/^triplex/i.test(s))return 'Triplex';if(/^pefoam/i.test(s))return 'Pefoam';if(/^(cplug|coreplug)/i.test(s))return 'Coreplug';if(/^paper ?core/i.test(s))return 'Paper Core';if(/^penyangga/i.test(s))return 'Penyangga';if(/^list/i.test(s))return 'List';if(/^top box/i.test(s))return 'Top Box';if(/^bottom box/i.test(s))return 'Bottom Box';const w=s.split(/\s+/)[0]||'Lainnya';return w.charAt(0).toUpperCase()+w.slice(1).toLowerCase()};
+const GO=['Pallet','Pboard','Flywood','Triplex','Coreplug','Pefoam','Paper Core','Penyangga','List','Top Box','Bottom Box','Pallet Plastik','Layer Besi'],GP={};
+TL.forEach(t=>{const g=baseOf(t.nm);(GP[g]||(GP[g]=[])).push(t)});
+const gk=Object.keys(GP).sort((p,q)=>{const i=GO.indexOf(p),j=GO.indexOf(q);return (i<0?99:i)-(j<0?99:j)||p.localeCompare(q)});
+const HT=['Item','Sat','Diminta','Diterima','Kurang','Jumlah permintaan'];
+gk.forEach((g,gi)=>{const L=GP[g];if(y+7+6+row({nm:L[0].nm,k:''})>FB){d.addPage();y=M}
+fill(219,234,254);d.setDrawColor(191,219,254);d.rect(M,y,W,7,'FD');d.setFont('helvetica','bold');d.setFontSize(10);col(30,58,138);d.text((gi+1)+'. '+g.toUpperCase()+'   ('+L.length+' ukuran / type)',M+2,y+4.9);y+=7;colHead(HT);
+L.forEach(t=>{const c={nm:t.nm,u:t.u,q:rd2(t.q),g:ND(rd2(t.g)),s:t.s>0?'-'+ND(rd2(t.s)):'0',bad:t.s>0,ok:t.s===0,k:t.n+' kali'};
+if(y+row(c)>FB){d.addPage();y=M;d.setFont('helvetica','italic');d.setFontSize(8);col(100,116,139);d.text('(lanjutan) '+g,M,y+3);y+=5;colHead(HT)}drawRow(c)});
+const U={};L.forEach(t=>{const u=String(t.u).trim().toLowerCase(),x=U[u]||(U[u]={u:t.u,q:0,g:0,s:0});x.q+=t.q;x.g+=t.g;x.s+=t.s});
+Object.values(U).forEach(x=>{const c={nm:'Subtotal '+g,u:x.u,q:rd2(x.q),g:ND(rd2(x.g)),s:x.s>0?'-'+ND(rd2(x.s)):'0',bad:x.s>0,ok:x.s===0,k:''};
+if(y+row(c)>FB){d.addPage();y=M;colHead(HT)}fill(248,250,252);d.rect(M,y,W,row(c),'F');drawRow(c)});
+y+=5})}
 const N=d.getNumberOfPages();for(let i=1;i<=N;i++){d.setPage(i);d.setFont('helvetica','normal');d.setFontSize(8);col(148,163,184);d.text('PM Gudang',M,PH-8);d.text('Halaman '+i+' / '+N,PW-M,PH-8,{align:'right'})}
 return d}
 async function rekPdf(share){if(!dOK(V.from)||!dOK(V.to)){tst('Isi tanggal dari dan sampai');return}if(V.from>V.to){tst('Tanggal “dari” harus sebelum “sampai”');return}
