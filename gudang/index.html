@@ -6,42 +6,51 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="PM Gudang">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="manifest" href="manifest.json">
 <script src="../config.js"></script>
 <script src="../pin.js"></script><script src="../akses.js" data-role="gudang"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'"><noscript><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet"></noscript>
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
-:root{--pri:#059669;--pd:#047857;--bg:#F8FAFC;--card:#fff;--bd:#E2E8F0;--tx:#0F172A;--tx2:#64748B;--sub:#F1F5F9;--gr:#059669;--grb:#ECFDF5;--am:#D97706;--amb:#FFFBEB;--red:#DC2626;--redb:#FEF2F2;--bl:#2548D0;--blb:#EFF6FF;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
+:root{--pri:#059669;--pd:#047857;--bg:#F8FAFC;--card:#fff;--bd:#E2E8F0;--tx:#0F172A;--tx2:#64748B;--mut:#94A3B8;--sub:#F1F5F9;--gr:#059669;--grb:#ECFDF5;--am:#D97706;--amb:#FFFBEB;--red:#DC2626;--redb:#FEF2F2;--bl:#2548D0;--blb:#EFF6FF;--sh:0 2px 8px -2px rgba(15,23,42,.05),0 1px 3px -1px rgba(15,23,42,.04);--sh2:0 8px 24px -4px rgba(5,150,105,.22),0 4px 8px -2px rgba(15,23,42,.06);color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{margin:0;background:var(--bg);color:var(--tx);font:400 14px/20px system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
-button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0}
-#app{max-width:480px;margin:0 auto;padding:0 16px 110px}
+body{margin:0;background:var(--bg);color:var(--tx);font:400 14px/20px 'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;text-transform:uppercase;letter-spacing:.2px;-webkit-font-smoothing:antialiased}
+button,input,textarea,select{text-transform:uppercase}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0;text-transform:uppercase;letter-spacing:inherit}
+#app{max-width:480px;margin:0 auto;padding:0 16px 100px}
 header{display:flex;align-items:center;gap:10px;padding:12px 0;position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);z-index:5}
-header .lg{width:38px;height:38px;border-radius:10px;background:var(--pri);color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px}
-header div{flex:1;min-width:0}header small{color:var(--tx2);font-size:11px;display:block}header h1{margin:0;font-size:20px;line-height:26px}
+header .lg{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--pd),var(--pri));color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px;box-shadow:0 4px 10px -2px rgba(5,150,105,.35)}
+header div{flex:1;min-width:0}header small{color:var(--tx2);font-size:11px;display:block;font-weight:600}header h1{margin:0;font-size:20px;line-height:26px;font-weight:700}
 .back{width:38px;height:38px;border-radius:50%;background:var(--grb);color:var(--pri);font-weight:700;font-size:18px}
-.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:14px;box-shadow:0 2px 8px -2px rgba(15,23,42,.05);margin-bottom:12px}
-.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}.g3 .card{text-align:center;padding:12px 6px;margin:0}.g3 b{display:block;font-size:24px;line-height:30px}.g3 small{color:var(--tx2);font-size:11px}
-.btn{height:50px;border-radius:12px;background:var(--pri);color:#fff;font-weight:600;font-size:15px;padding:0 16px;display:flex;align-items:center;justify-content:center;gap:8px;width:100%}
-.btn:active{background:var(--pd)}.btn.s{background:var(--grb);color:var(--pri)}.btn.d{background:var(--redb);color:var(--red);height:44px}.btn.w{background:#25D366}
-.row{display:flex;gap:8px;margin-top:10px}.row>*{flex:1}
+.hero{background:linear-gradient(135deg,#065F46,#059669 60%,#10B981);color:#fff;border-radius:16px;padding:16px;box-shadow:var(--sh2);margin-bottom:14px}
+.hero small{color:#A7F3D0;font-size:11px;font-weight:600;display:block}.hero h2{margin:0;font-size:20px;line-height:28px;font-weight:700}.hero p{margin:2px 0 0;color:#A7F3D0}
+.hero .seg{display:inline-flex;background:rgba(255,255,255,.15);border-radius:99px;padding:3px;margin:12px 0 0}.hero .seg button{padding:6px 14px;border-radius:99px;font-weight:600;font-size:13px;color:#fff;flex:none}.hero .seg .on{background:#fff;color:var(--pri);box-shadow:none}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:16px;box-shadow:var(--sh);margin-bottom:12px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}.g3 .card{text-align:center;padding:12px 6px;margin:0}.g3 b{display:block;font-size:24px;line-height:30px;color:var(--pri)}.g3 small{color:var(--tx2);font-size:11px;font-weight:600}
+.btn{height:50px;border-radius:12px;background:var(--pri);color:#fff;font-weight:600;font-size:15px;padding:0 16px;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;box-shadow:var(--sh2)}
+.btn:active{transform:scale(.98);background:var(--pd)}.btn.s{background:var(--grb);color:var(--pri);box-shadow:none;height:48px}.btn.d{background:var(--redb);color:var(--red);box-shadow:none;height:44px;border-radius:10px}.btn.w{background:#25D366;box-shadow:0 8px 20px -6px rgba(37,211,102,.5);margin-bottom:10px}
+.row{display:flex;gap:8px;margin-top:10px}.row>*{flex:1}.row .btn{padding:0 8px;font-size:13px;white-space:nowrap}
 .pill{display:inline-block;border-radius:99px;padding:2px 10px;font-size:11px;font-weight:700;border:1px solid;white-space:nowrap}
 .pill.gr{background:var(--grb);color:var(--gr);border-color:#A7F3D0}.pill.am{background:var(--amb);color:var(--am);border-color:#FDE68A}.pill.rd{background:var(--redb);color:var(--red);border-color:#FECACA}.pill.bl{background:var(--blb);color:var(--bl);border-color:#BFDBFE}.pill.mu{background:var(--sub);color:var(--tx2);border-color:var(--bd)}
-.t{display:flex;gap:10px;align-items:flex-start}.t>div{flex:1;min-width:0}.t small,.mut{color:var(--tx2);display:block}
-.bar{height:8px;border-radius:99px;background:var(--sub);overflow:hidden;margin-top:10px}.bar i{display:block;height:100%;background:var(--pri);border-radius:99px}
-textarea,input,select{width:100%;border:1.5px solid #CBD5E1;border-radius:10px;padding:0 12px;height:46px;font:inherit;background:#fff;color:var(--tx)}
-textarea{height:170px;padding:10px 12px;resize:vertical}
+.t{display:flex;gap:10px;align-items:flex-start}.t>div{flex:1;min-width:0}.t b{font-size:15px}.t small,.mut{color:var(--tx2);display:block}
+.bar{height:8px;border-radius:99px;background:var(--sub);overflow:hidden;margin-top:12px}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--pri),#34D399);border-radius:99px}
+textarea,input,select{width:100%;border:1.5px solid #CBD5E1;border-radius:10px;padding:0 14px;height:48px;font:inherit;background:var(--card);color:var(--tx)}
+textarea{height:170px;padding:10px 14px;resize:vertical}
 textarea:focus,input:focus{outline:0;border-color:var(--pri);box-shadow:0 0 0 3px rgba(5,150,105,.15)}
-label{display:block;font-size:12px;font-weight:600;color:var(--tx2);margin-bottom:10px}label>*{margin-top:4px}
-.it{padding:12px 0;border-top:1px solid var(--bd)}.it:first-of-type{border-top:0}
-.qr{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:8px}.qr input{text-align:center;font-weight:700;font-size:16px}.qr button{height:46px;padding:0 14px;border-radius:10px;background:var(--grb);color:var(--pri);font-weight:600}
+label{display:block;font-size:12px;font-weight:600;color:var(--tx2);margin-bottom:12px}label>*{margin-top:4px}
+.it{padding:14px 0;border-top:1px solid var(--bd)}.it:first-of-type{border-top:0;padding-top:0}.it:last-of-type{padding-bottom:0}
+.qr{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:10px}.qr input{text-align:center;font-weight:700;font-size:16px}.qr button{height:48px;padding:0 16px;border-radius:10px;background:var(--grb);color:var(--pri);font-weight:700}
 .seg{display:flex;background:var(--sub);border-radius:99px;padding:3px;margin-bottom:12px}.seg button{flex:1;padding:8px;border-radius:99px;font-weight:600;font-size:13px;color:var(--tx2)}.seg .on{background:#fff;color:var(--pri);box-shadow:0 1px 3px rgba(15,23,42,.1)}
-nav{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--bd);padding-bottom:env(safe-area-inset-bottom,0px);z-index:6}
-nav div{max-width:480px;margin:0 auto;display:flex}nav button{flex:1;padding:8px 0;font-size:11px;color:var(--tx2);display:flex;flex-direction:column;align-items:center;gap:2px}nav button span{font-size:20px;line-height:24px}nav .on{color:var(--pri);font-weight:700}
-.em{text-align:center;color:var(--tx2);padding:28px 10px}
-#tt{position:fixed;left:16px;right:16px;bottom:calc(80px + env(safe-area-inset-bottom,0px));z-index:9;display:flex;justify-content:center;pointer-events:none}#tt span{background:var(--tx);color:#fff;padding:10px 16px;border-radius:12px}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--bd);padding-bottom:env(safe-area-inset-bottom,0px);z-index:7}
+nav div{max-width:480px;margin:auto;display:grid;grid-template-columns:repeat(3,1fr)}nav button{height:64px;font-size:11px;font-weight:600;color:var(--mut);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}nav button span{font-size:20px;line-height:22px}nav .on{color:var(--pri)}
+.em{text-align:center;color:var(--tx2);padding:28px 12px}.em b{display:block;color:var(--tx);font-size:16px;margin-bottom:4px}
+#tt{position:fixed;left:16px;right:16px;bottom:calc(80px + env(safe-area-inset-bottom,0px));z-index:30;display:flex;justify-content:center;pointer-events:none}#tt span{background:#2F3038;color:#F1EFFB;padding:12px 16px;border-radius:12px;box-shadow:var(--sh2)}
 .hp{font-size:12px;color:var(--tx2);margin:0 0 10px}
+::placeholder{color:var(--mut);opacity:1}
 @media(prefers-color-scheme:dark){body{background:#F8FAFC}}
 </style></head><body>
 <div id="app"></div><div id="tt"></div>
@@ -76,7 +85,7 @@ return{id:'r'+uid(),no:r.no,date:r.date,by:r.by,spk:r.spk,cust:[...new Set(Objec
 function tst(m){const t=$('#tt');t.innerHTML='<span>'+esc(m)+'</span>';clearTimeout(tst.h);tst.h=setTimeout(()=>t.innerHTML='',3000)}
 function card(r){const d=r.status==='done',p=prog(r);return `<div class="card" data-a=v data-id=${r.id} style="cursor:pointer"><div class=t><div><b>${esc(r.no)}</b><small>${fd(r.date)} • ${esc(r.by||'-')}</small>${r.spk.length?`<small>SPK ${esc(r.spk.join(', '))}${r.cust?' • '+esc(r.cust):''}</small>`:''}</div><span class="pill ${d?'gr':cnt(r)?'am':'mu'}">${d?'Selesai':cnt(r)?'Sebagian':'Menunggu'}</span></div><div class=bar><i style="width:${p}%"></i></div><small class=mut style="margin-top:6px">${cnt(r)}/${r.items.length} item dicek • ${p}% sesuai${d?' • diterima '+fd(r.rdate)+' oleh '+esc(r.recv):''}${r.ship?' • 🚚 dikirim':''}</small></div>`}
 function vList(){const op=S.reqs.filter(r=>r.status!=='done'),dn=S.reqs.filter(r=>r.status==='done'),L=V.tab==='open'?op:dn;
-return `<div class=g3><div class=card><b>${op.length}</b><small>Menunggu</small></div><div class=card><b>${op.filter(cnt).length}</b><small>Sebagian</small></div><div class=card><b>${dn.length}</b><small>Selesai</small></div></div>`+(L.map(card).join('')||`<div class="card em"><b>${V.tab==='open'?'Belum ada permintaan masuk':'Belum ada penerimaan selesai'}</b><br>${V.tab==='open'?'Di app permintaan tekan “Kirim ke Gudang”, atau buka tab Impor untuk memilih file.':''}</div>`)}
+return `<div class=hero><small>PENERIMAAN PACKAGING</small><h2>Halo, ${esc(S.name||'Petugas Gudang')} 👋</h2><p>${op.length?op.length+' permintaan menunggu diterima':'Tidak ada permintaan menunggu'}</p><div class=seg><button class="${V.tab==='open'?'on':''}" data-a=tab data-v=open>Masuk</button><button class="${V.tab==='done'?'on':''}" data-a=tab data-v=done>Riwayat</button></div></div><div class=g3><div class=card><b>${op.length}</b><small>Menunggu</small></div><div class=card><b>${op.filter(cnt).length}</b><small>Sebagian</small></div><div class=card><b>${dn.length}</b><small>Selesai</small></div></div>`+(L.map(card).join('')||`<div class="card em"><b>${V.tab==='open'?'Belum ada permintaan masuk':'Belum ada penerimaan selesai'}</b><br>${V.tab==='open'?'Di app permintaan tekan “Kirim ke Gudang”, atau buka tab Impor untuk memilih file.':''}</div>`)}
 function vImp(){return gcard()+`<div class=seg><button class="${V.imp==='file'?'on':''}" data-a=im data-v=file>File</button><button class="${V.imp==='wa'?'on':''}" data-a=im data-v=wa>Tempel WhatsApp</button><button class="${V.imp==='man'?'on':''}" data-a=im data-v=man>Manual</button></div>`+(V.imp==='file'?`<div class=card><p class=hp>Di app permintaan tekan <b>Kirim ke Gudang</b>, lalu pilih <b>PM Gudang</b> di menu bagikan — file langsung masuk. Kalau file datang lewat cara lain (WhatsApp, email, flashdisk), pilih file <b>.pmg</b> di sini.</p>${V.err?`<p style="color:var(--red);margin:0 0 10px">${esc(V.err)}</p>`:''}<label class=btn for=pf style="margin:0">📂 Pilih file permintaan</label><input id=pf type=file accept=".pmg,.json,application/json" multiple hidden></div>`:V.imp==='wa'?`<div class=card><p class=hp>Di app permintaan: Dokumen → Kirim WhatsApp, salin pesannya, lalu tempel di sini. Bisa beberapa pesan (per SPK) sekaligus.</p><textarea id=wat placeholder="*PERMINTAAN PACKAGING*&#10;No: PM-...&#10;..."></textarea>${V.err?`<p style="color:var(--red);margin:8px 0 0">${esc(V.err)}</p>`:''}<div class=row><button class="btn s" data-a=pst>📋 Tempel</button><button class=btn data-a=ipw>Impor</button></div></div>`:`<div class=card><label>No. permintaan<input id=mn placeholder="PM-20261107-001"></label><label>Pemohon<input id=mb></label><label>Daftar item (satu per baris: nama : jumlah satuan)<textarea id=mi placeholder="PALLET SL : 20 pcs&#10;TALI : 3 roll"></textarea></label><button class=btn data-a=ipm>Simpan</button></div>`)}
 function vDet(){const r=S.reqs.find(x=>x.id===V.id);if(!r){V.id=null;return vList()}const d=r.status==='done';
 return `<div class=card><div class=t><div><b>${esc(r.no)}</b><small>${fd(r.date)} • Pemohon: ${esc(r.by||'-')}</small>${r.spk.length?`<small>SPK ${esc(r.spk.join(', '))}${r.cust?' • '+esc(r.cust):''}</small>`:''}${r.note?`<small>Catatan: ${esc(r.note)}</small>`:''}</div><span class="pill ${d?'gr':'am'}" id=ps>${d?'Selesai':'Proses'}</span></div><div class=bar><i id=pb style="width:${prog(r)}%"></i></div></div>`+
@@ -85,7 +94,7 @@ return `<div class=card><div class=t><div><b>${esc(r.no)}</b><small>${fd(r.date)
 function ba(r){const L=r.items.map((l,i)=>{const g=l.got===''?0:num(l.got),[t]=ist(l);return `${i+1}. ${l.nm} : diminta ${l.qty}, diterima ${g} ${l.unit} (${t})${l.note?' - '+l.note:''}`});
 return `*BERITA ACARA PENERIMAAN PACKAGING*\nNo Permintaan: ${r.no}\n${r.spk.length?'SPK: '+r.spk.join(', ')+'\n':''}Pemohon: ${r.by||'-'}\nTgl terima: ${fd(r.rdate||today())}\nPenerima (Gudang): ${r.recv||'-'}\n\n`+L.join('\n')+(r.items.every(l=>ist(l)[1]==='gr')?'\n\nSemua item diterima sesuai.':'\n\nAda selisih, mohon ditindaklanjuti.')}
 function render(){const d=V.id,T=d?'Penerimaan':V.tab==='imp'?'Impor Permintaan':V.tab==='open'?'Menunggu Diterima':'Riwayat Penerimaan',nv=[['open','📦','Masuk'],['imp','＋','Impor'],['done','✔','Riwayat']];
-$('#app').innerHTML=`<header>${d?'<button class=back data-a=bk>←</button>':'<span class=lg>GD</span>'}<div><small>PM Gudang • penerimaan packaging</small><h1>${T}</h1></div></header>${d?vDet():V.tab==='imp'?vImp():vList()}<nav><div>${nv.map(n=>`<button class="${!d&&V.tab===n[0]?'on':''}" data-a=tab data-v=${n[0]}><span>${n[1]}</span>${n[2]}</button>`).join('')}</div></nav>`}
+$('#app').innerHTML=`<header>${d?'<button class=back data-a=bk>←</button>':'<span class=lg>GD</span>'}<div><small>Aplikasi penerimaan packaging</small><h1>${T}</h1></div></header>${d?vDet():V.tab==='imp'?vImp():vList()}<nav><div>${nv.map(n=>`<button class="${!d&&V.tab===n[0]?'on':''}" data-a=tab data-v=${n[0]}><span>${n[1]}</span>${n[2]}</button>`).join('')}</div></nav>`}
 function add(L,quiet){if(!L.length){V.err='Format pesan tidak dikenali. Pastikan pesan diawali *PERMINTAAN PACKAGING*.';render();return}
 let n=0,u=0,s=0;L.forEach(r=>{const x=S.reqs.find(q=>q.no===r.no);if(x&&x.status!=='done'){r.items.forEach(l=>{const f=x.items.find(z=>z.nm===l.nm&&z.unit===l.unit);if(!f)x.items.push(l);else f.qty=l.qty});r.spk.forEach(s=>{if(!x.spk.includes(s))x.spk.push(s)});u++}else if(!x){S.reqs.unshift(r);n++}else s++});
 save();V.err='';const m=n+' permintaan baru'+(u?', '+u+' diperbarui':'')+(s?', '+s+' sudah selesai (dilewati)':'');
