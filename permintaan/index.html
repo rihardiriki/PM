@@ -241,7 +241,9 @@ const today=()=>{const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+
 const fd=s=>{const[y,m,d]=s.split('-');return d+' '+MON[m-1]+' '+y},ft=t=>{const d=new Date(t);return pad(d.getHours())+':'+pad(d.getMinutes())};
 const sum=r=>Math.round((r.sps?allL(r):r.lines).reduce((a,l)=>a+(+l.qty||0),0)*100)/100,needsV=l=>{const m=it(l.itemId);return !l.grp&&m&&m.variants.length>0&&!l.variant};
 const lbl=l=>{const t=szT(l),z=sx(l);return (z&&z.pre&&t?t:l.nm+(t?' '+t:''))+(l.variant?' '+l.variant:'')},qs=l=>(l.qty===''?'–':l.qty)+' '+l.unit;
-function nextNo(d){const p='PM-'+d.replace(/-/g,'')+'-';let m=0;S.reqs.forEach(r=>{if(r.no.startsWith(p))m=Math.max(m,+r.no.slice(p.length)||0)});return p+String(m+1).padStart(3,'0')}
+/* Kode unik per perangkat (3 huruf/angka) supaya nomor dari beberapa HP packing tidak pernah sama */
+const DEVK=(()=>{try{let c=localStorage.getItem('pmg_dev');if(!/^[A-Z0-9]{3}$/.test(c||'')){const a='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';c='';for(let i=0;i<3;i++)c+=a[Math.floor(Math.random()*a.length)];localStorage.setItem('pmg_dev',c)}return c}catch(e){return'XXX'}})();
+function nextNo(d){const p='PM-'+d.replace(/-/g,'')+'-'+DEVK+'-';let m=0;S.reqs.forEach(r=>{if(r.no.startsWith(p))m=Math.max(m,+r.no.slice(p.length)||0)});return p+String(m+1).padStart(3,'0')}
 const newReq=()=>{const d=today();const o={id:'r'+uid(),no:nextNo(d),date:d,name:S.profile.name,dept:S.profile.dept,ref:'',note:'',status:'draft',sps:[{id:uid(),spk:newSpk(),lines:[]}],ai:0,at:Date.now()};return wire(o)};
 const newSpk=()=>({pick:{bd:'',ly:''},treq:'',no:'',customer:'',rolls:[{id:uid(),type:'',size:'',qty:'',cust:'',pack:'',dest:'',orient:'',rpp:'',treq:'',bd:'',ly:''}]});
 const SPN=/^\d{10}$/,isSp=n=>['varion','supernova'].includes(String(n||'').trim().toLowerCase());
@@ -487,8 +489,13 @@ const PGDB=((window.PMG_CONFIG||{}).dbUrl||'').replace(/\/+$/,''),KODE=(window.P
 const kgTx=r=>r.gsent?'✔ Terkirim ke gudang '+new Date(r.gsent).toLocaleString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):PGDB?'Terkirim otomatis ke app gudang':'Alamat database belum diisi: tombol memakai file.';
 async function kirimKeGudang(r){if(kgBusy)return;const d=pmgData(r),q=d.requests[0];if(!q.items.length){tst('Belum ada item yang terisi.');return}
 const k=KODE;
-if(PGDB){kgBusy=true;try{const id=pgId(r.no),res=await fetch(PGDB+'/inbox/'+k+'/'+id+'.json',{method:'PUT',body:JSON.stringify(Object.assign({},q,{sent:d.sent}))});if(!res.ok)throw new Error(res.status);
-r.gsent=Date.now();save();const e=$('#kgs');if(e)e.textContent=kgTx(r);tst('✔ Terkirim ke gudang');return}catch(e){tst('Gagal kirim otomatis (cek internet). Memakai file…')}finally{kgBusy=false}}
+if(PGDB){kgBusy=true;try{const id=pgId(r.no),u=PGDB+'/inbox/'+k+'/'+id+'.json',res=await fetch(u,{method:'PUT',body:JSON.stringify(Object.assign({},q,{sent:d.sent}))});
+if(!res.ok){const er=new Error('HTTP '+res.status);er.http=res.status;throw er}
+/* Cek ulang: pastikan data benar-benar tersimpan di database sebelum dinyatakan terkirim */
+const ck=await fetch(PGDB+'/inbox/'+k+'/'+id+'/sent.json',{cache:'no-store'});if(!ck.ok||(await ck.json())!==d.sent){const er=new Error('Data tidak tersimpan');er.http=-1;throw er}
+r.gsent=Date.now();save();const e=$('#kgs');if(e)e.textContent=kgTx(r);tst('✔ Terkirim ke gudang');return}
+catch(e){if(e&&e.http){tst(e.http===401||e.http===403?'GAGAL: ditolak server ('+e.http+'). Keluar lalu login ulang, atau cek aturan database (FIREBASE.md). Permintaan BELUM masuk gudang.':'GAGAL kirim ke gudang ('+(e.message||'error')+'). Permintaan BELUM masuk gudang, coba lagi.');return}
+tst('Tidak ada internet. Permintaan BELUM masuk gudang. File dibuat sebagai cadangan…')}finally{kgBusy=false}}
 const nm=r.no+'.pmg',f=new File([JSON.stringify(d,null,1)],nm,{type:'application/json'});
 if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],title:'Permintaan Packaging '+r.no});return}catch(e){if(e.name==='AbortError')return}}
 const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=nm;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1e4);tst('File '+nm+' diunduh. Kirim ke gudang lalu buka di app PM Gudang.')}
