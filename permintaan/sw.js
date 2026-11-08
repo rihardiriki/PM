@@ -1,5 +1,5 @@
 // Service worker PM Packaging — ubah VERSION setiap kali ada update agar cache diperbarui
-const VERSION = 'v31';
+const VERSION = 'v38';
 const CACHE = 'pm-packaging-' + VERSION;
 const CORE = [
   './',
