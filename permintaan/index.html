@@ -218,6 +218,11 @@ nav .on{background:var(--pb)!important;color:var(--pri)}
 #app{padding-bottom:40px!important}
 #tt{bottom:20px!important;left:16px!important}
 }
+/* Hasil cetak & PDF: huruf kapital semua, ukuran font lebih kecil agar nyaman dibaca */
+.paper,.paper *{text-transform:uppercase}
+.paper{font-size:11px;line-height:16px}.paper h5{font-size:15px}.paper th{font-size:10px}.paper .meta small{font-size:9.5px}.paper .gh td{font-size:10.5px}.paper .sc td{font-size:10px}
+#pk.paper{font-size:9.5px;line-height:1.3}#pk h5{font-size:13px}#pk .meta small{font-size:8.5px}#pk .sc td{font-size:9px}#pk th{font-size:9px}#pk .gh td{font-size:9.5px}
+@media print{#pk.paper{font-size:9.5px;line-height:1.3}#pk h5{font-size:13px}#pk .meta small{font-size:8.5px}#pk .sc td{font-size:9px}#pk th{font-size:9px}#pk .gh td{font-size:9.5px}}
 </style></head><body>
 <div id="app"></div><div id="sh"></div><div id="tt"></div>
 <script>
@@ -573,7 +578,8 @@ return `<small class=hp style="margin:0 0 10px">Lokasi, foto, serta item dan jum
 /* PDF: jumlah halaman A4 menyesuaikan isi (halaman baru otomatis). */
 function mkpdf(r){const{jsPDF}=window.jspdf,B=blocks(r),one=!B.some(b=>b.s),M=10,PW=210,PH=297,W=PW-2*M,GAP=5,MM=.3528,co=S.profile.co||'';
 const info=[['No. Permintaan',r.no],['Tanggal',fd(r.date)],['Pemohon',(r.name||'-')+(r.dept?' ('+r.dept+')':'')],one?['Tujuan / No. Ref',r.ref||'-']:['Jumlah SPK',String(B.length)]];
-const run=(k,cols,draw)=>{const d=new jsPDF({unit:'mm',format:'a4'}),F=10*k,LH=F*MM*1.15,SM=F*.8,SLH=SM*MM*1.15,pad=.8*k,bl=z=>z*MM*.92,cw=(W-GAP*(cols-1))/cols,hh=LH+2*pad,bh=LH+1.4;
+const run=(k,cols,draw)=>{const d=new jsPDF({unit:'mm',format:'a4'}),F=8.5*k,LH=F*MM*1.15,SM=F*.8,SLH=SM*MM*1.15,pad=.8*k,bl=z=>z*MM*.92,cw=(W-GAP*(cols-1))/cols,hh=LH+2*pad,bh=LH+1.4;
+const UC=x=>Array.isArray(x)?x.map(UC):String(x).toUpperCase(),_tx=d.text.bind(d),_sp=d.splitTextToSize.bind(d);d.text=(t,...a)=>_tx(UC(t),...a);d.splitTextToSize=(t,...a)=>_sp(UC(t),...a);
 let ok=true,ci=0,cy=M,top=M,bot=PH-M;const FOOT=6;
 const dr=f=>{if(draw&&ok)f()},sf=(z,b)=>{d.setFontSize(z);d.setFont('helvetica',b?'bold':'normal')},dark=()=>d.setTextColor(15,23,42),X=()=>M+ci*(cw+GAP);
 sf(F,0);dark();d.setLineWidth(.2);
@@ -582,7 +588,7 @@ const cells=(its,x,y,w,nc,dry)=>{const cwd=w/nc;let h=0;for(let i=0;i<its.length
 if(draw&&!dry&&ok)row.forEach((q,j)=>{const xx=x+j*cwd,yy=y+h+bl(F);sf(F,0);d.setTextColor(100,116,139);d.text(q.c[0]+': ',xx,yy);sf(F,1);dark();d.text(q.ls,xx+q.lw,yy)});h+=rn*LH+.4}return h};
 const bar=(t,f,tc)=>{dr(()=>{d.setFillColor(f[0],f[1],f[2]);d.rect(X(),cy,cw,bh,'F');sf(F,1);d.setTextColor(tc[0],tc[1],tc[2]);d.text(d.splitTextToSize(t,cw-2)[0],X()+1,cy+.7+bl(F));dark()});cy+=bh};
 /* header */
-const T=Math.max(9,14*k);dr(()=>{sf(T,1);d.setTextColor(217,72,15);d.text('PERMINTAAN PACKAGING',M,cy+bl(T));dark();sf(Math.max(8,F),1);d.text(co,PW-M,cy+bl(T),{align:'right'})});cy+=T*MM*1.15+1;
+const T=Math.max(8,12*k);dr(()=>{sf(T,1);d.setTextColor(217,72,15);d.text('PERMINTAAN PACKAGING',M,cy+bl(T));dark();sf(Math.max(8,F),1);d.text(co,PW-M,cy+bl(T),{align:'right'})});cy+=T*MM*1.15+1;
 dr(()=>{d.setDrawColor(217,72,15);d.setLineWidth(.5);d.line(M,cy,PW-M,cy);d.setLineWidth(.2)});cy+=1.5;cy+=cells(info,M,cy,W,2)+1;top=cy;
 /* catatan + tanda tangan di bagian bawah */
 sf(F,0);const nt=r.note?d.splitTextToSize('Catatan khusus: '+r.note,W):[],nh=nt.length?nt.length*LH+2:0,sh=Math.max(14,26*k),hb=nh+sh+1;bot=PH-M-FOOT;
@@ -614,7 +620,7 @@ itemTbl(recapG(r).map(G=>({nm:G.nm,rows:G.rows})))}
 if(ok&&cy+hb+2>PH-M-FOOT+.001){d.addPage();cy=M}
 dr(()=>{const y0=PH-M-FOOT-hb;sf(F,0);dark();if(nt.length)d.text(nt,M,y0+bl(F));const bw=(W-8)/3,by=y0+nh;d.setDrawColor(148,163,184);['Pemohon','Mengetahui','Penerima'].forEach((t,i)=>{const x=M+i*(bw+4);d.rect(x,by,bw,sh);sf(F,0);d.text(t,x+bw/2,by+1+bl(F),{align:'center'});d.text('( '+(i?'........':r.name||'........')+' )',x+bw/2,by+sh-1.5,{align:'center'})})});
 /* nomor halaman */
-{const np=d.getNumberOfPages();for(let i=1;i<=np;i++){d.setPage(i);sf(8,0);d.setTextColor(100,116,139);d.text(String(r.no),M,PH-M+2);d.text('Halaman '+i+' / '+np,PW-M,PH-M+2,{align:'right'})}dark()}
+{const np=d.getNumberOfPages();for(let i=1;i<=np;i++){d.setPage(i);sf(7,0);d.setTextColor(100,116,139);d.text(String(r.no),M,PH-M+2);d.text('Halaman '+i+' / '+np,PW-M,PH-M+2,{align:'right'})}dark()}
 return{ok,d}};
 return run(1,1,true).d.output('arraybuffer')}
 /* Cetak: ukuran normal, jumlah lembar A4 menyesuaikan isi. Dokumen disalin ke #pp lalu dicetak. */
