@@ -12,6 +12,7 @@
 <script src="../pin.js"></script><script src="../akses.js" data-role="gudang"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'"><noscript><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet"></noscript>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
@@ -131,7 +132,7 @@ let S={reqs:[],name:'',seen:{},last:0};try{const r=localStorage.getItem(K);if(r)
 const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}};
 const today=()=>{const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())};
 const fd=s=>{if(!/^\d{4}-\d\d-\d\d$/.test(s||''))return s||'-';const[y,m,d]=s.split('-'),M=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];return d+' '+M[m-1]+' '+y};
-let V={tab:'open',id:null,err:'',q:'',f:'all',per:'bln'};
+let V={tab:'open',id:null,err:'',q:'',f:'all',per:'bln',from:today().slice(0,8)+'01',to:today()};
 const num=v=>{const n=parseFloat(String(v).replace(',','.'));return isNaN(n)?0:n};
 const got=l=>l.got===''||l.got==null?null:num(l.got);
 function ist(l){const g=got(l);if(g===null)return['Belum','mu'];if(g===0)return['Belum','mu'];if(g<l.qty)return['Kurang '+Math.round((l.qty-g)*100)/100,'am'];if(g>l.qty)return['Lebih '+Math.round((g-l.qty)*100)/100,'bl'];return['Sesuai','gr']}
@@ -154,13 +155,74 @@ fl=o?[['all','Semua'],['wait','Belum dicek'],['part','Sebagian']]:[['all','Semua
 return `<div class=hero><small>PENERIMAAN PACKAGING</small><h2>Halo, ${esc(S.name||'Petugas Gudang')} 👋</h2><p>${op.length?op.length+' permintaan menunggu diterima':'Tidak ada permintaan menunggu'}</p><div class=sy>${!DB?'● Database belum diisi (config.js)':PERR?'● ⚠ '+esc(PERR):'● Tersambung • cek terakhir '+lt()}</div><div class=hr><div class=seg><button class="${o?'on':''}" data-a=tab data-v=open>Masuk</button><button class="${!o?'on':''}" data-a=tab data-v=done>Riwayat</button></div><button class=rf data-a=gpl>↻ Cek sekarang</button></div></div>`+
 `<div class=g3><div class=card><b>${op.filter(r=>!cnt(r)).length}</b><small>Menunggu</small></div><div class=card><b>${op.filter(cnt).length}</b><small>Sebagian</small></div><div class=card><b>${dn.length}</b><small>Selesai</small></div></div>`+
 `<div class=srch><input id=qs type=search placeholder="Cari no. permintaan, SPK, customer, item" value="${esc(V.q||'')}" autocomplete=off></div><div class=chips>${fl.map(x=>`<button class="chip ${V.f===x[0]?'on':''}" data-a=fl data-v=${x[0]}>${x[1]}</button>`).join('')}</div><div id=lst>${listHtml()}</div>`}
+/* ===== Rekap PDF permintaan & penerimaan berdasarkan rentang tanggal ===== */
+const dOK=x=>/^\d{4}-\d\d-\d\d$/.test(x||''),inD=(x,a,b)=>dOK(x)&&x>=a&&x<=b;
+const inRng=(r,a,b)=>inD(r.date,a,b)||(r.status==='done'&&inD(r.rdate,a,b));
+const rngRows=(a,b)=>S.reqs.filter(r=>inRng(r,a,b)).sort((x,y)=>String(x.date).localeCompare(String(y.date))||String(x.no).localeCompare(String(y.no)));
+const stTx=r=>r.status==='done'?(hasShort(r)?'Selesai, ada kekurangan':'Selesai'):cnt(r)?'Sebagian dicek':'Menunggu';
+function rkInfo(){if(!dOK(V.from)||!dOK(V.to))return 'Isi tanggal dari dan sampai.';if(V.from>V.to)return '<span style="color:var(--red)">Tanggal “dari” harus sebelum tanggal “sampai”.</span>';
+const R=rngRows(V.from,V.to);return R.length?`<b>${R.length}</b> permintaan • <b>${R.filter(r=>r.status==='done').length}</b> selesai diterima • <b>${R.reduce((n,r)=>n+r.items.length,0)}</b> item`:'Tidak ada permintaan atau penerimaan pada rentang ini.'}
+function rkpCard(){const t=today(),y=+t.slice(0,4),m=+t.slice(5,7),pm=m===1?12:m-1,py=m===1?y-1:y,ld=new Date(y,m-1,0).getDate();
+return `<div class=card><b>Rekap PDF Permintaan &amp; Penerimaan</b><p class=hp style="margin:2px 0 10px">Pilih rentang tanggal, lalu unduh rekap semua permintaan dan penerimaan gudang dalam satu PDF.</p><div class=chips style="padding-bottom:6px">${[['bi','Bulan ini'],['bl','Bulan lalu'],['th','Tahun ini']].map(x=>`<button class=chip data-a=rpre data-v=${x[0]}>${x[1]}</button>`).join('')}</div><div class=row style="margin-top:0"><label style="margin:0">Dari tanggal<input type=date id=rkf value="${esc(V.from)}"></label><label style="margin:0">Sampai tanggal<input type=date id=rkt value="${esc(V.to)}"></label></div><p class=hp id=rki style="margin:10px 0 0">${rkInfo()}</p><div class=row><button class="btn s" data-a=rpdf>⬇ Unduh PDF</button><button class=btn data-a=rshr>↗ Bagikan PDF</button></div></div>`}
+function rkPreset(k){const t=today(),y=+t.slice(0,4),m=+t.slice(5,7),f=(Y,M,D)=>Y+'-'+pad(M)+'-'+pad(D);
+if(k==='bi'){V.from=f(y,m,1);V.to=t}else if(k==='bl'){const pm=m===1?12:m-1,py=m===1?y-1:y;V.from=f(py,pm,1);V.to=f(py,pm,new Date(py,pm,0).getDate())}else{V.from=f(y,1,1);V.to=t}}
+function jsPdfReady(){return window.jspdf?Promise.resolve(true):new Promise(ok=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';s.onload=()=>ok(!!window.jspdf);s.onerror=()=>ok(false);document.head.appendChild(s)})}
+function mkRekPdf(a,b){const{jsPDF}=window.jspdf,d=new jsPDF({unit:'mm',format:'a4'}),M=12,PW=210,PH=297,W=PW-2*M,R=rngRows(a,b),FB=PH-M-6,LH=4.2;let y=M;
+const X=[M+1.5,0,0,0,0,0],CW=[68,14,20,20,22,40],tw=CW.reduce((p,c)=>p+c,0),sc=(W-3)/tw;CW.forEach((c,i)=>CW[i]=c*sc);let ax=M+1.5;CW.forEach((c,i)=>{X[i]=ax;ax+=c});
+const txt=(t,w,fs,st)=>{d.setFont('helvetica',st||'normal');d.setFontSize(fs);return d.splitTextToSize(String(t),w)};
+const col=(r,g,bl)=>d.setTextColor(r,g,bl),fill=(r,g,bl)=>d.setFillColor(r,g,bl);
+const ND=x=>x==null?'-':String(rd2(x));
+function title(){d.setFont('helvetica','bold');d.setFontSize(14);col(30,58,138);d.text('REKAP PERMINTAAN & PENERIMAAN GUDANG',M,y+5);y+=11;
+d.setFontSize(10);col(15,23,42);d.text('Periode: '+fd(a)+' s/d '+fd(b),M,y);y+=5;d.setFont('helvetica','normal');d.setFontSize(8);col(100,116,139);d.text('Dicetak: '+new Date().toLocaleString('id-ID',{day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'})+(S.name?' oleh '+S.name:''),M,y);y+=4;
+d.text('Memuat permintaan yang diajukan atau diterima pada periode tersebut.',M,y);y+=6}
+function sumBoxes(){const done=R.filter(r=>r.status==='done'),B=[[R.length,'Permintaan'],[done.length,'Selesai diterima'],[R.length-done.length,'Belum selesai'],[done.filter(hasShort).length,'Ada kekurangan'],[R.reduce((n,r)=>n+r.items.length,0),'Total item']],bw=(W-4*3)/5;
+B.forEach((x,i)=>{const bx=M+i*(bw+3);fill(239,246,255);d.setDrawColor(191,219,254);d.roundedRect(bx,y,bw,16,2,2,'FD');d.setFont('helvetica','bold');d.setFontSize(14);col(i===3&&x[0]?220:37,i===3&&x[0]?38:72,i===3&&x[0]?38:208);d.text(String(x[0]),bx+bw/2,y+8,{align:'center'});d.setFont('helvetica','normal');d.setFontSize(7.5);col(100,116,139);d.text(x[1],bx+bw/2,y+13,{align:'center'})});y+=22}
+function colHead(L){const h=6;if(y+h>FB){d.addPage();y=M}fill(37,72,208);d.rect(M,y,W,h,'F');d.setFont('helvetica','bold');d.setFontSize(8);col(255,255,255);
+d.text(L[0],X[0],y+4.1);d.text(L[1],X[1],y+4.1);d.text(L[2],X[2]+CW[2]-2,y+4.1,{align:'right'});d.text(L[3],X[3]+CW[3]-2,y+4.1,{align:'right'});d.text(L[4],X[4]+CW[4]-2,y+4.1,{align:'right'});d.text(L[5],X[5],y+4.1);y+=h}
+function row(c){const n=txt(c.nm,CW[0]-3,8.5),k=txt(c.k||'',CW[5]-1,8,'normal'),h=Math.max(n.length,k.length)*LH+1.6;return h}
+function drawRow(c){const n=txt(c.nm,CW[0]-3,8.5),k=txt(c.k||'',CW[5]-1,8),h=Math.max(n.length,k.length)*LH+1.6;
+d.setFont('helvetica','normal');d.setFontSize(8.5);col(15,23,42);d.text(n,X[0],y+3.6);d.text(c.u,X[1],y+3.6);d.text(ND(c.q),X[2]+CW[2]-2,y+3.6,{align:'right'});
+d.text(c.g,X[3]+CW[3]-2,y+3.6,{align:'right'});if(c.bad)col(220,38,38);else if(c.ok)col(5,150,105);else col(100,116,139);d.text(c.s,X[4]+CW[4]-2,y+3.6,{align:'right'});
+col(71,85,105);d.setFontSize(8);d.text(k,X[5],y+3.6);d.setDrawColor(226,232,240);d.line(M,y+h,M+W,y+h);y+=h}
+function sec(t){if(y+14>FB){d.addPage();y=M}d.setFont('helvetica','bold');d.setFontSize(11);col(30,58,138);d.text(t,M,y+4);y+=7}
+title();
+if(!R.length){d.setFont('helvetica','normal');d.setFontSize(10);col(15,23,42);d.text('Tidak ada data pada periode ini.',M,y+4)}
+else{sumBoxes();sec('A. Daftar Permintaan & Penerimaan');
+const HL=['Item','Sat','Diminta','Diterima','Selisih','Keterangan'];
+R.forEach(r=>{const l1='No. '+r.no+'  •  '+stTx(r),l2='Tgl permintaan: '+fd(r.date)+'   Pemohon: '+(r.by||'-')+'   Tgl terima: '+(r.status==='done'?fd(r.rdate):'-')+'   Penerima: '+(r.status==='done'?(r.recv||'-'):'-'),l3=(r.spk&&r.spk.length?'SPK: '+r.spk.join(', '):'')+(r.cust?(r.spk&&r.spk.length?'   ':'')+'Customer: '+r.cust:'')+(r.note?'   Catatan: '+r.note:'');
+const L2=txt(l2,W-4,8.5),L3=l3?txt(l3,W-4,8.5):[],hh=5.5+(L2.length+L3.length)*4+1.5;
+const first=r.items[0]?row({nm:r.items[0].nm,k:r.items[0].note||''}):0;
+if(y+hh+6+first>FB){d.addPage();y=M}
+fill(241,245,249);d.setDrawColor(203,213,225);d.rect(M,y,W,hh,'FD');d.setFont('helvetica','bold');d.setFontSize(9.5);col(15,23,42);d.text(l1,M+2,y+4.4);
+d.setFont('helvetica','normal');d.setFontSize(8.5);col(51,65,85);d.text(L2,M+2,y+9);if(L3.length)d.text(L3,M+2,y+9+L2.length*4);y+=hh;
+colHead(HL);
+r.items.forEach(l=>{const g=got(l),done=r.status==='done',sh=short(l),dif=g===null?null:rd2(g-l.qty);
+const c={nm:l.nm,u:l.unit,q:l.qty,g:g===null?'-':ND(g),s:g===null?(done?'Tidak datang':'-'):dif===0?'Sesuai':(dif>0?'+':'')+ND(dif),bad:done&&sh>0||(g!==null&&dif<0),ok:g!==null&&dif===0,k:l.note||''};
+if(y+row(c)>FB){d.addPage();y=M;d.setFont('helvetica','italic');d.setFontSize(8);col(100,116,139);d.text('(lanjutan) '+r.no,M,y+3);y+=5;colHead(HL)}drawRow(c)});
+y+=5});
+/* Total per item */
+const T={};R.forEach(r=>r.items.forEach(l=>{const k=String(l.nm).trim().toLowerCase()+'|'+String(l.unit).trim().toLowerCase(),t=T[k]||(T[k]={nm:l.nm,u:l.unit,q:0,g:0,s:0,n:0});t.q+=l.qty;const g=got(l);if(g!==null)t.g+=g;if(r.status==='done')t.s+=short(l);t.n++}));
+const TL=Object.values(T).sort((p,q)=>String(p.nm).localeCompare(String(q.nm)));
+if(y+30>FB){d.addPage();y=M}sec('B. Total per Item (seluruh periode)');
+const HT=['Item','Sat','Diminta','Diterima','Kurang','Jumlah permintaan'];colHead(HT);
+TL.forEach(t=>{const c={nm:t.nm,u:t.u,q:rd2(t.q),g:ND(rd2(t.g)),s:t.s>0?'-'+ND(rd2(t.s)):'0',bad:t.s>0,ok:t.s===0,k:t.n+' kali'};
+if(y+row(c)>FB){d.addPage();y=M;colHead(HT)}drawRow(c)})}
+const N=d.getNumberOfPages();for(let i=1;i<=N;i++){d.setPage(i);d.setFont('helvetica','normal');d.setFontSize(8);col(148,163,184);d.text('PM Gudang',M,PH-8);d.text('Halaman '+i+' / '+N,PW-M,PH-8,{align:'right'})}
+return d}
+async function rekPdf(share){if(!dOK(V.from)||!dOK(V.to)){tst('Isi tanggal dari dan sampai');return}if(V.from>V.to){tst('Tanggal “dari” harus sebelum “sampai”');return}
+if(!rngRows(V.from,V.to).length){tst('Tidak ada data pada rentang ini');return}
+tst('Membuat PDF…');if(!await jsPdfReady()){tst('Pustaka PDF belum termuat. Sambungkan internet lalu coba lagi.');return}
+try{const doc=mkRekPdf(V.from,V.to),name='Rekap-Gudang_'+V.from+'_sd_'+V.to+'.pdf',blob=doc.output('blob');
+if(share){const f=new File([blob],name,{type:'application/pdf'});if(navigator.share&&navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f]}).catch(()=>{});return}}
+const u=URL.createObjectURL(blob),al=document.createElement('a');al.href=u;al.download=name;document.body.appendChild(al);al.click();al.remove();setTimeout(()=>URL.revokeObjectURL(u),60000);tst(share?'Perangkat tidak bisa membagikan file, PDF diunduh':'PDF diunduh')}
+catch(e){tst('Gagal membuat PDF')}}
 /* Rekap kekurangan penerimaan */
 const inPer=r=>V.per==='all'||String(r.rdate||'').slice(0,7)===today().slice(0,7);
 const rekRows=()=>S.reqs.filter(r=>r.status==='done'&&inPer(r));
 function rekTx(){const R=rekRows(),K=R.filter(hasShort),ln=[];ln.push('*REKAP KEKURANGAN PENERIMAAN PACKAGING*','Periode: '+(V.per==='all'?'Semua':'Bulan ini'),'Penerimaan selesai: '+R.length+', dengan kekurangan: '+K.length,'');
 if(!K.length)ln.push('Tidak ada kekurangan.');K.forEach((r,i)=>{ln.push((i+1)+'. '+r.no+' (terima '+fd(r.rdate)+')');shorts(r).forEach(l=>ln.push('   - '+l.nm+': kurang '+short(l)+' '+l.unit+' (diminta '+l.qty+', diterima '+(got(l)??0)+'). Alasan: '+(l.note||'-')))});return ln.join('\n')}
 function vRek(){const R=rekRows(),K=R.filter(hasShort);
-return `<div class=chips>${[['bln','Bulan ini'],['all','Semua']].map(x=>`<button class="chip ${V.per===x[0]?'on':''}" data-a=pr data-v=${x[0]}>${x[1]}</button>`).join('')}</div>`+
+return rkpCard()+`<div class=chips>${[['bln','Bulan ini'],['all','Semua']].map(x=>`<button class="chip ${V.per===x[0]?'on':''}" data-a=pr data-v=${x[0]}>${x[1]}</button>`).join('')}</div>`+
 `<div class=g3><div class=card><b>${R.length}</b><small>Selesai</small></div><div class=card><b>${R.length-K.length}</b><small>Lengkap</small></div><div class=card><b style="color:var(--red)">${K.length}</b><small>Kurang</small></div></div>`+
 `<div class=card><b>Daftar kekurangan</b>${K.length?K.map(r=>`<div class=ks data-a=v data-id=${r.id} style="cursor:pointer"><b>${esc(r.no)}</b><small class=mut>Diterima ${fd(r.rdate)} oleh ${esc(r.recv||'-')}${r.spk.length?' • SPK '+esc(r.spk.join(', ')):''}</small>${shorts(r).map(l=>`<small style="margin-top:4px;display:block"><b>${esc(l.nm)}</b>: kurang <b style="color:var(--red)">${short(l)}</b> ${esc(l.unit)} <span class=mut style="display:inline">(diminta ${l.qty}, diterima ${got(l)??0})</span><br><span class=mut style="display:inline">Alasan: ${esc(l.note||'-')}</span></small>`).join('')}</div>`).join(''):'<p class=hp style="margin:8px 0 0">Tidak ada kekurangan pada periode ini.</p>'}</div>`+
 (K.length?`<div class=row><button class="btn s" data-a=rcp>📋 Salin rekap</button><button class="btn w" data-a=rwa style="margin:0">↗ WhatsApp</button></div>`:'')}
@@ -183,7 +245,7 @@ items:(q.items||[]).map(l=>({id:uid(),nm:String(l.nm||'').trim(),unit:String(l.u
 async function impFiles(files){const L=[];let bad=0;for(const f of files){try{L.push(...fromFile(JSON.parse(await f.text())))}catch(e){bad++}}
 if(!L.length){tst('File tidak dikenali. Gunakan file dari tombol “Kirim ke Gudang”.');return}
 add(L);if(bad)setTimeout(()=>tst(bad+' file tidak dikenali, dilewati'),3300)}
-document.addEventListener('change',async e=>{const t=e.target;if(t.id==='shc'||t.id==='shg'){const fs=[...t.files];t.value='';if(!fs.length)return;tst('Memproses foto…');for(const f of fs){if(SH.ph.length>=4){tst('Maksimal 4 foto');break}try{SH.ph.push(await photoFor(f))}catch(x){tst('Foto tidak bisa dibaca')}}render();return}});
+document.addEventListener('change',async e=>{const t=e.target;if(t.id==='rkf'||t.id==='rkt'){V[t.id==='rkf'?'from':'to']=t.value;const i=$('#rki');if(i)i.innerHTML=rkInfo();return}if(t.id==='shc'||t.id==='shg'){const fs=[...t.files];t.value='';if(!fs.length)return;tst('Memproses foto…');for(const f of fs){if(SH.ph.length>=4){tst('Maksimal 4 foto');break}try{SH.ph.push(await photoFor(f))}catch(x){tst('Foto tidak bisa dibaca')}}render();return}});
 /* Kirim ke lokasi: lokasi + foto tujuan packaging, diteruskan ke app permintaan lewat Firebase */
 const sid=n=>String(n).replace(/[.$#\[\]\/]/g,'_'),allOk=r=>r.items.length>0&&r.items.every(l=>ist(l)[1]==='gr'),dtx=iso=>new Date(iso).toLocaleString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
 let SH={id:null,loc:'',ph:[]},shipping=false;
@@ -231,6 +293,9 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-a]')
 if(a==='tab'){SH.id=null;V.tab=b.dataset.v;V.id=null;V.err='';V.q='';V.f='all';render();scrollTo(0,0)}
 else if(a==='fl'){V.f=b.dataset.v;render()}
 else if(a==='pr'){V.per=b.dataset.v;render()}
+else if(a==='rpre'){rkPreset(b.dataset.v);render()}
+else if(a==='rpdf')rekPdf(false)
+else if(a==='rshr')rekPdf(true)
 else if(a==='rcp'){try{await navigator.clipboard.writeText(rekTx());tst('Rekap disalin')}catch(x){tst('Gagal menyalin')}}
 else if(a==='rwa'){const t=rekTx();if(navigator.share&&/Android|iPhone|iPad/i.test(navigator.userAgent))navigator.share({text:t}).catch(()=>{});else window.open('https://api.whatsapp.com/send?text='+encodeURIComponent(t),'_blank')}
 else if(a==='v'){SH.id=null;V.id=b.dataset.id;render();scrollTo(0,0)}

@@ -1,5 +1,5 @@
 // Service worker PM Gudang — naikkan VERSION setiap ada update agar cache diperbarui
-const VERSION = 'v11';
+const VERSION = 'v12';
 const CACHE = 'pm-gudang-' + VERSION;
 const CORE = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png'];
 self.addEventListener('install', e => {
