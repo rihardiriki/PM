@@ -158,6 +158,27 @@ html.nvo nav{transform:none;visibility:visible;box-shadow:12px 0 32px -8px rgba(
 nav::before{left:72px!important;top:30px!important}
 .toast,#tt{left:16px!important}
 }
+
+/* ===== Responsif v2: HP kecil / HP / tablet / laptop / layar lebar ===== */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{overflow-x:clip;min-height:100vh;min-height:100dvh}
+img,svg,video{max-width:100%}
+.row>*{min-width:0}
+.lh .g,.t>div,.rq .t>div,.gl .g{min-width:0;overflow-wrap:anywhere}
+.lh .g b,.rq b.n,.t b,.gl .g b,.ch,.pill{overflow-wrap:anywhere}
+@media(max-width:360px){
+#app{padding-left:12px;padding-right:12px}
+.hero{padding:14px 12px}.card{padding:12px}.g3{gap:6px}.g3 b{font-size:18px;line-height:24px}
+.chip{padding:5px 11px}.btn{padding:0 10px}.row{gap:6px}
+header h1{font-size:15px;line-height:20px}.row .btn{font-size:11.5px;padding:0 6px}
+}
+@media(hover:none) and (pointer:coarse) and (max-width:767px){input,select,textarea,.f input,.f select,.f textarea,.in{font-size:16px}}
+@media(max-height:480px) and (orientation:landscape){nav button{height:46px}#app{padding-bottom:70px}.sheet{max-height:94%}}
+@media(min-width:768px) and (max-width:1099px){#app{max-width:920px;margin-left:auto;margin-right:auto}nav div{max-width:640px}}
+@media(min-width:1100px){#app{max-width:1280px;margin-left:auto;margin-right:auto}}
+@media(min-width:1700px){#app{max-width:1440px}#lst,#hl{grid-template-columns:repeat(auto-fill,minmax(420px,1fr))}}
+.paper:not(#pk){overflow-wrap:anywhere}.paper:not(#pk) table{table-layout:auto}
+@media(min-width:1100px){header{padding-left:0!important}}
 </style></head><body><button class="mb" id="mb" type="button" aria-label="Menu" aria-expanded="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
 <div id="app"></div><div id="sh"></div><div id="tt"></div>
 <script>
