@@ -36,12 +36,19 @@ Di database tadi, buka tab **Rules**, hapus isinya, tempel ini, lalu **Publish**
           "$n": { ".validate": "newData.isString() && newData.val().length < 450000" }
         }
       }
+    },
+    "confirm": {
+      "$kode": {
+        ".read": "$kode.length >= 10",
+        ".write": "$kode.length >= 10",
+        "$id": { ".validate": "newData.hasChildren(['no','sent','at'])" }
+      }
     }
   }
 }
 ```
 
-`inbox` = permintaan ke gudang, `outbox` = info pengiriman dari gudang, `photos` = foto lokasi. **Jika Anda sudah pernah memasang aturan lama, ganti dengan aturan ini lalu Publish ulang**, kalau tidak fitur Kirim ke Lokasi tidak bisa mengirim.
+`inbox` = permintaan ke gudang, `outbox` = info pengiriman dari gudang, `photos` = foto lokasi, `confirm` = konfirmasi barang diterima dari bagian permintaan. **Jika Anda sudah pernah memasang aturan lama, ganti dengan aturan ini lalu Publish ulang**, kalau tidak fitur Kirim ke Lokasi tidak bisa mengirim.
 
 Artinya: data hanya bisa dibuka oleh orang yang tahu **kode gudang** (minimal 10 karakter). Daftar semua kode tidak bisa dilihat siapa pun.
 
@@ -120,6 +127,13 @@ Realtime Database → tab **Rules** → ganti seluruh isi dengan ini → **Publi
         "$id": {
           "$n": { ".validate": "newData.isString() && newData.val().length < 450000" }
         }
+      }
+    },
+    "confirm": {
+      "$kode": {
+        ".read": "$kode.length >= 10 && auth != null && root.child('roles').child(auth.uid).exists()",
+        ".write": "$kode.length >= 10 && auth != null && root.child('roles').child(auth.uid).exists()",
+        "$id": { ".validate": "newData.hasChildren(['no','sent','at'])" }
       }
     }
   }
