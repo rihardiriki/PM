@@ -140,26 +140,18 @@ footer{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-betw
   .stage{max-width:1200px}
   .tile{padding:36px}
 }
+/* Header: hanya nama perusahaan, rata tengah */
+.brand{justify-content:center;text-align:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.2)}
+.brand b{font-size:13px;line-height:18px;font-weight:700;letter-spacing:.6px;text-transform:uppercase}
+@media (min-width:720px){.brand{padding:14px 0}.brand b{font-size:16px;line-height:22px}}
 </style>
 </head>
 <body>
 <div class="bg" aria-hidden="true"></div>
 <div class="stage">
-  <header class="brand">
-    <svg viewBox="0 0 512 512" aria-hidden="true">
-        <ellipse cx="256" cy="430" rx="128" ry="18" fill="#0B1F5C" opacity=".28"/>
-        <polygon points="112,173 256,256 256,422 112,339" fill="#DCE6FF"/>
-        <polygon points="256,256 400,173 400,339 256,422" fill="#B3C3FF"/>
-        <polygon points="256,90 400,173 256,256 112,173" fill="#FFFFFF"/>
-        <polygon points="201.3,121.5 345.3,204.5 310.7,224.5 166.7,141.5" fill="#FFB020"/>
-        <polygon points="345.3,204.5 310.7,224.5 310.7,300.8 345.3,280.9" fill="#E08A00"/>
-        <polyline points="146.6,275.9 172.5,324.1 224.3,287.5" fill="none" stroke="#2548D0" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    <b>PM Packaging</b>
-  </header>
+  <header class="brand"><b>PT INDOPOLY SWAKARSA INDUSTRY TBK</b></header>
 
   <main class="mid">
-    <h1>Pilih <span>aplikasi</span></h1>
     <nav class="menu" aria-label="Pilih aplikasi">
     <a class="tile req" href="permintaan/" data-role="packing" data-name="PM Permintaan">
       <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2.5"/><path d="M9 4.5V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v.5"/><path d="M9 10h6M9 14h6M9 18h3"/></svg><span class="lock"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span></div>

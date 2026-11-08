@@ -46,7 +46,22 @@
       body:JSON.stringify({email:email,password:pass,returnSecureToken:true})
     }).then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j}})});
   }
-  function toEmail(user){return /@/.test(user)?user:user.toLowerCase()+'@pm-packaging.local'}
+  /* Email akun: nama@pm-<departemen>.local (contoh raihan@pm-finishing.local -> nama raihan, departemen finishing).
+     Ketik nama saja (raihan), "raihan@finishing", atau email lengkap. Nama saja dicoba ke tiap departemen di deptList (config.js). */
+  function cands(user){user=String(user||'').trim().toLowerCase();
+    if(/@.*\./.test(user))return [user];
+    if(/@/.test(user)){var p=user.split('@');return [p[0]+'@pm-'+p[1].replace(/^pm-/,'')+'.local']}
+    var m=rd('pmg_em')||{},L=[];if(m[user])L.push(m[user]);
+    (CFG.deptList||['packaging','finishing']).forEach(function(d){var e=user+'@pm-'+d+'.local';if(L.indexOf(e)<0)L.push(e)});
+    return L}
+  function signInAny(user,pass){var L=cands(user),i=0,key=String(user||'').trim().toLowerCase();
+    function next(){return signIn(L[i],pass).then(function(x){
+      if(x.ok){if(key.indexOf('@')<0){var m=rd('pmg_em')||{};m[key]=L[i];wr('pmg_em',m)}return x}
+      if(++i>=L.length)return x;
+      return /INVALID_LOGIN_CREDENTIALS|EMAIL_NOT_FOUND|INVALID_PASSWORD/.test((x.j.error&&x.j.error.message)||'')?next():x})}
+    return next()}
+  function ident(email){var m=/^([^@]+)@(.*)$/.exec(String(email||'').toLowerCase())||[];
+    return {name:m[1]||'',dept:(m[2]||'').replace(/\.local$/,'').replace(/^pm-/,'')}}
 
   var A={mode:FB?'firebase':'pin'};
   var busy=null;
@@ -61,6 +76,41 @@
   };
   A.logout=function(){rm(SK);rm(PK)};
   A.user=function(){var s=rd(SK);return FB&&s&&s.name?String(s.name):''};
+  A.dept=function(){var s=rd(SK);return FB&&s&&s.dept?String(s.dept):''};
+
+  /* Foto profil: buatan otomatis (pola unik per nama pengguna) atau foto yang dipilih sendiri */
+  function hash(str){var h=2166136261;for(var i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
+  function ident5(n){var h=hash(String(n||'?').toLowerCase()),hue=h%360,h2=hash('x'+n),c=[];
+    var bg='hsl('+hue+',55%,92%)',fg='hsl('+hue+',60%,38%)',r='';
+    for(var y=0;y<5;y++)for(var x=0;x<3;x++){if((h2>>(y*3+x))&1){r+='<rect x="'+(8+x*9)+'" y="'+(8+y*9)+'" width="9" height="9"/>';if(x<2)r+='<rect x="'+(8+(4-x)*9)+'" y="'+(8+y*9)+'" width="9" height="9"/>'}}
+    if(!r)r='<rect x="26" y="26" width="9" height="9"/>';
+    return 'data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 61 61"><rect width="61" height="61" fill="'+bg+'"/><g fill="'+fg+'">'+r+'</g></svg>')}
+  A.foto=function(n){try{var f=localStorage.getItem('pmg_foto_'+String(n||'').toLowerCase());if(f)return f}catch(e){}return ident5(n)};
+  function setFoto(n,d){try{localStorage.setItem('pmg_foto_'+String(n||'').toLowerCase(),d)}catch(e){}}
+  function refreshAva(n){var u=A.foto(n);[].forEach.call(document.querySelectorAll('img[data-ava]'),function(i){i.src=u})}
+  /* Popup profil (lapisan paling depan): foto, nama pengguna, departemen, Ganti foto, Keluar */
+  A.profil=function(o){var old=document.getElementById('pmg-pop');if(old){old.remove();return}
+    o=o||{};var n=o.name||'Pengguna',d=o.dept?String(o.dept).charAt(0).toUpperCase()+String(o.dept).slice(1):'-';
+    var w=document.createElement('div');w.id='pmg-pop';w.setAttribute('role','dialog');
+    w.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483000;background:rgba(15,23,42,.28)';
+    var bs='display:block;width:100%;height:36px;border-radius:8px;border:0;font:600 12px/36px system-ui,-apple-system,Segoe UI,Roboto,sans-serif;text-align:center;cursor:pointer;margin-top:8px;text-transform:uppercase;letter-spacing:.2px;';
+    w.innerHTML='<div style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 52px);right:12px;width:230px;max-width:calc(100vw - 24px);background:#fff;color:#0F172A;border:1px solid #E2E8F0;border-radius:12px;box-shadow:0 12px 32px -8px rgba(15,23,42,.35);padding:14px;font:400 12px/17px system-ui,-apple-system,Segoe UI,Roboto,sans-serif;text-align:center;text-transform:uppercase">'
+     +'<img data-ava alt="" style="width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid #E2E8F0;display:block;margin:0 auto 8px">'
+     +'<div id="pmg-pn" style="font-weight:700;font-size:14px;line-height:19px;overflow-wrap:anywhere"></div>'
+     +'<div style="color:#64748B;margin-top:2px">Departemen: <b id="pmg-pd" style="color:#0F172A"></b></div>'
+     +'<label style="'+bs+'background:#F1F5F9;color:#0F172A">Ganti foto<input id="pmg-pf" type="file" accept="image/*" hidden></label>'
+     +'<button type="button" id="pmg-po" style="'+bs+'background:#FEF2F2;color:#DC2626">⎋ Keluar</button></div>';
+    document.body.appendChild(w);w.querySelector('#pmg-pn').textContent=n;w.querySelector('#pmg-pd').textContent=d;w.querySelector('img').src=A.foto(n);
+    function close(){w.remove();document.removeEventListener('keydown',esc)}
+    function esc(e){if(e.key==='Escape')close()}
+    document.addEventListener('keydown',esc);
+    w.addEventListener('click',function(e){if(e.target===w)close()});
+    (o.extra||[]).forEach(function(x){var b=document.createElement('button');b.type='button';b.textContent=x.label;b.style.cssText=bs+'background:#F1F5F9;color:#0F172A';b.onclick=function(){close();x.fn()};w.querySelector('#pmg-po').parentNode.insertBefore(b,w.querySelector('#pmg-po'))});
+    w.querySelector('#pmg-po').onclick=function(){close();if(o.logout)o.logout()};
+    w.querySelector('#pmg-pf').onchange=function(){var f=this.files&&this.files[0];if(!f)return;var im=new Image(),u=URL.createObjectURL(f);
+      im.onload=function(){var k=Math.min(1,192/Math.max(im.width,im.height)),s=Math.min(im.width,im.height),c=document.createElement('canvas');c.width=c.height=Math.min(192,s);
+        c.getContext('2d').drawImage(im,(im.width-s)/2,(im.height-s)/2,s,s,0,0,c.width,c.height);URL.revokeObjectURL(u);setFoto(n,c.toDataURL('image/jpeg',.82));refreshAva(n)};
+      im.onerror=function(){URL.revokeObjectURL(u)};im.src=u}};
 
   /* Masuk. Mengembalikan Promise {ok:true} atau {ok:false,msg:'...'} */
   A.login=function(role,user,pass){
@@ -72,9 +122,9 @@
     }
     user=String(user||'').trim();
     if(!user||!pass)return Promise.resolve({ok:false,msg:'Isi nama pengguna dan kata sandi.'});
-    return signIn(toEmail(user),pass).then(function(x){
+    return signInAny(user,pass).then(function(x){
       if(!x.ok)return {ok:false,msg:fail((x.j.error&&x.j.error.message)||'')};
-      var j=x.j;
+      var j=x.j,id=ident(j.email);
       return fetchRole(j.localId,j.idToken).then(function(rr){
         if(rr.err==='rules')return {ok:false,msg:'Aturan database belum dipasang (lihat FIREBASE.md).'};
         if(rr.err)return {ok:false,msg:'Tidak bisa memeriksa akses. Coba lagi.'};
@@ -85,7 +135,7 @@
           if(pp.err)return {ok:false,msg:'Tidak bisa memeriksa sandi. Coba lagi.'};
           if(!pp.at)return {ok:false,change:'first',msg:'Ini login pertama. Buat sandi baru Anda sendiri.'};
           if(Date.now()-pp.at>EXP)return {ok:false,change:'expired',msg:'Sandi sudah lebih dari 6 bulan. Buat sandi baru.'};
-          wr(SK,{uid:j.localId,name:user,role:rr.role,pwAt:pp.at,idToken:j.idToken,refreshToken:j.refreshToken,exp:Date.now()+(parseInt(j.expiresIn,10)||3600)*1000});
+          wr(SK,{uid:j.localId,name:id.name||user,dept:id.dept,email:j.email||'',role:rr.role,pwAt:pp.at,idToken:j.idToken,refreshToken:j.refreshToken,exp:Date.now()+(parseInt(j.expiresIn,10)||3600)*1000});
           return {ok:true};
         });
       });
@@ -100,9 +150,9 @@
     if(neu.length<8)return Promise.resolve({ok:false,msg:'Sandi baru minimal 8 karakter.'});
     if(!/[A-Za-z]/.test(neu)||!/\d/.test(neu))return Promise.resolve({ok:false,msg:'Sandi baru harus mengandung huruf dan angka.'});
     if(neu===old)return Promise.resolve({ok:false,msg:'Sandi baru harus berbeda dari sandi lama.'});
-    return signIn(toEmail(user),old).then(function(x){
+    return signInAny(user,old).then(function(x){
       if(!x.ok)return {ok:false,msg:fail((x.j.error&&x.j.error.message)||'')};
-      var j=x.j;
+      var j=x.j,id=ident(j.email);
       return fetchRole(j.localId,j.idToken).then(function(rr){
         if(rr.err==='rules')return {ok:false,msg:'Aturan database belum dipasang (lihat FIREBASE.md).'};
         if(rr.err)return {ok:false,msg:'Tidak bisa memeriksa akses. Coba lagi.'};
@@ -116,7 +166,7 @@
           var u=y.u,now=Date.now();
           return rawFetch(DB+'/pw/'+j.localId+'.json?auth='+encodeURIComponent(u.idToken),{method:'PUT',body:JSON.stringify(now)}).then(function(w){
             if(!w.ok)return {ok:false,msg:'Sandi sudah diganti, tetapi aturan database "pw" belum dipasang (lihat FIREBASE.md). Hubungi admin.'};
-            wr(SK,{uid:j.localId,name:user,role:rr.role,pwAt:now,idToken:u.idToken,refreshToken:u.refreshToken,exp:now+(parseInt(u.expiresIn,10)||3600)*1000});
+            wr(SK,{uid:j.localId,name:id.name||user,dept:id.dept,email:j.email||'',role:rr.role,pwAt:now,idToken:u.idToken,refreshToken:u.refreshToken,exp:now+(parseInt(u.expiresIn,10)||3600)*1000});
             return {ok:true};
           });
         });

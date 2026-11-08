@@ -128,7 +128,8 @@ Realtime Database → tab **Rules** → ganti seluruh isi dengan ini → **Publi
 
 ## C. Buat akun tiap orang
 1. **Authentication → Users → Add user**. Isi email dan kata sandi.
-   Tips: tidak perlu email asli. Pakai bentuk `nama@pm-packaging.local` (mis. `budi@pm-packaging.local`). Di halaman depan orang cukup mengetik **budi** (tanpa `@...`).
+   Tips: tidak perlu email asli. Pakai bentuk `nama@pm-<departemen>.local`, mis. `raihan@pm-finishing.local`. App otomatis membaca **nama pengguna = raihan** dan **departemen = Finishing** dari email ini (tampil di foto profil kanan atas, dan terisi di form permintaan).
+   Saat login, orang cukup mengetik **raihan**: app mencoba departemen yang terdaftar di `deptList` pada `config.js` (mis. `deptList: ['finishing', 'packaging', 'gudang']`) dan mengingat yang cocok di perangkat itu. Departemen baru: tambahkan namanya ke `deptList`. Cara lain tanpa `deptList`: ketik `raihan@finishing` atau email lengkap.
 2. Salin **User UID** akun itu.
 3. **Realtime Database → Data**: tambahkan node `roles`, di dalamnya kunci = UID tadi, nilai = salah satu:
    - `packing` → hanya PM Permintaan
