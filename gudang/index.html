@@ -163,13 +163,14 @@ nav .on{background:var(--pb)!important;color:var(--pri)}
 #app{padding-bottom:40px!important}
 #tt{bottom:20px!important;left:16px!important}
 }
+.gh{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:-4px -4px 12px;padding:9px 12px;background:var(--pb);border-left:4px solid var(--pri);border-radius:8px}.gh b{color:var(--pd);font-size:13px;line-height:17px}.gh span{font-size:11px;font-weight:700;color:var(--tx2);white-space:nowrap}
 </style></head><body>
 <div id="app"></div><div id="tt"></div>
 <script>
 const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const K='pmg_v1',uid=()=>Math.random().toString(36).slice(2,9),pad=n=>String(n).padStart(2,'0');
-let S={reqs:[],name:'',seen:{},last:0};try{const r=localStorage.getItem(K);if(r)S=Object.assign(S,JSON.parse(r))}catch(e){}
-const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}};
+let S={reqs:[],name:'',seen:{},last:0,sy:{},hs:{ts:0},del:{}};try{const r=localStorage.getItem(K);if(r)S=Object.assign(S,JSON.parse(r))}catch(e){}
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}if(window.HSK)window.HSK()};
 /* Nama petugas = nama pengguna login; departemen dari email akun (nama@pm-departemen.local) */
 const ME=(window.PMG_AKSES&&PMG_AKSES.user&&PMG_AKSES.user())||'',DEPT=(window.PMG_AKSES&&PMG_AKSES.dept&&PMG_AKSES.dept())||'',CO='PT INDOPOLY SWAKARSA INDUSTRY TBK';
 if(ME){S.name=ME;save()}
@@ -179,6 +180,10 @@ const fd=s=>{if(!/^\d{4}-\d\d-\d\d$/.test(s||''))return s||'-';const[y,m,d]=s.sp
 let V={tab:'open',id:null,err:'',q:'',f:'all',per:'bln',from:today().slice(0,8)+'01',to:today()};
 const num=v=>{const n=parseFloat(String(v).replace(',','.'));return isNaN(n)?0:n};
 const got=l=>l.got===''||l.got==null?null:num(l.got);
+/* Subjudul penerimaan: item dikelompokkan seperti rekap di bagian permintaan */
+const GPX=[['PALLET & PALLET PLASTIK',/^(PALLET PLASTIK|PALLET|PAL\d)/i],['PBOARD / FLYWOOD / TRIPLEX / LAYER BESI',/^(PBOARD|FLYWOOD|FLY\d|TRIPLEX|LAYER BESI)/i]];
+function gof(l){if(l.grp)return l.grp;const n=String(l.nm||'').trim();for(const x of GPX)if(x[1].test(n))return x[0];const w=n.toUpperCase().match(/^(TOP BOX|BOTTOM BOX|[A-Z]+)/);return w?w[1]:'LAINNYA'}
+function grpOf(r){const o=[];r.items.forEach(l=>{const k=gof(l);let G=o.find(x=>x.g===k);if(!G)o.push(G={g:k,L:[]});G.L.push(l)});return o}
 function ist(l){const g=got(l);if(g===null)return['Belum','mu'];if(g===0)return['Belum','mu'];if(g<l.qty)return['Kurang '+Math.round((l.qty-g)*100)/100,'am'];if(g>l.qty)return['Lebih '+Math.round((g-l.qty)*100)/100,'bl'];return['Sesuai','gr']}
 const prog=r=>{const n=r.items.length||1;return Math.round(r.items.filter(l=>got(l)!==null&&got(l)>=l.qty).length/n*100)};
 const cnt=r=>r.items.filter(l=>got(l)!==null).length;
@@ -283,10 +288,10 @@ return rkpCard()+`<div class=chips>${[['bln','Bulan ini'],['all','Semua']].map(x
 (K.length?`<div class=row><button class="btn s" data-a=rcp>📋 Salin rekap</button><button class="btn w" data-a=rwa style="margin:0">↗ WhatsApp</button></div>`:'')}
 function vDet(){const r=S.reqs.find(x=>x.id===V.id);if(!r){V.id=null;return vList()}const d=r.status==='done';
 return `<div class=card><div class=t><div><b>${esc(r.no)}</b><small>${fd(r.date)} • Pemohon: ${esc(r.by||'-')}</small>${r.spk.length?`<small>SPK ${esc(r.spk.join(', '))}${r.cust?' • '+esc(r.cust):''}</small>`:''}${r.note?`<small>Catatan: ${esc(r.note)}</small>`:''}</div><span class="pill ${d?'gr':'am'}" id=ps>${d?'Selesai':'Proses'}</span></div><div class=bar><i id=pb style="width:${prog(r)}%"></i></div></div>`+
-`<div class=card>${r.items.map((l,i)=>{const[t,c]=ist(l);return `<div class=it><div class=t><div><b>${i+1}. ${esc(l.nm)}</b><small>Diminta: <b>${l.qty}</b> ${esc(l.unit)}</small></div><span class="pill ${c}" id=b_${l.id}>${t}</span></div>${d?`<small class=mut>Diterima: <b>${l.got===''?0:esc(l.got)}</b> ${esc(l.unit)}</small>${short(l)>0?`<div class=sw>Kurang <b>${short(l)}</b> ${esc(l.unit)}<br>Keterangan: ${esc(l.note||'-')}</div>`:l.note?`<small class=mut>Catatan: ${esc(l.note)}</small>`:''}`:`<div class=qr><input type=text inputmode=decimal data-g=${l.id} placeholder="Diterima (${esc(l.unit)})" value="${esc(l.got)}"><button data-a=ok data-id=${l.id}>Sesuai</button></div><div class=sw id=sh_${l.id} ${got(l)!==null&&short(l)>0?'':'hidden'}>${shMsg(l)}</div><input id=n_${l.id} class="${req(l)?'req':''}" data-n=${l.id} placeholder="Keterangan (wajib jika kurang)" value="${esc(l.note)}" style="margin-top:8px;height:44px;font-size:13px">`}</div>`}).join('')}</div>`+
+`${grpOf(r).map(G=>`<div class=card><div class=gh><b>${esc(G.g)}</b><span>${G.L.filter(l=>got(l)!==null).length}/${G.L.length} dicek</span></div><div class=gi>${G.L.map((l,i)=>{const[t,c]=ist(l);return `<div class=it><div class=t><div><b>${i+1}. ${esc(l.nm)}</b><small>Diminta: <b>${l.qty}</b> ${esc(l.unit)}</small></div><span class="pill ${c}" id=b_${l.id}>${t}</span></div>${d?`<small class=mut>Diterima: <b>${l.got===''?0:esc(l.got)}</b> ${esc(l.unit)}</small>${short(l)>0?`<div class=sw>Kurang <b>${short(l)}</b> ${esc(l.unit)}<br>Keterangan: ${esc(l.note||'-')}</div>`:l.note?`<small class=mut>Catatan: ${esc(l.note)}</small>`:''}`:`<div class=qr><input type=text inputmode=decimal data-g=${l.id} placeholder="Diterima (${esc(l.unit)})" value="${esc(l.got)}"><button data-a=ok data-id=${l.id}>Sesuai</button></div><div class=sw id=sh_${l.id} ${got(l)!==null&&short(l)>0?'':'hidden'}>${shMsg(l)}</div><input id=n_${l.id} class="${req(l)?'req':''}" data-n=${l.id} placeholder="Keterangan (wajib jika kurang)" value="${esc(l.note)}" style="margin-top:8px;height:44px;font-size:13px">`}</div>`}).join('')}</div></div>`).join('')}`+
 (d?`<div class=card><small class=mut>Diterima ${fd(r.rdate)} oleh <b>${esc(r.recv)}</b></small></div>${shipCard(r)}<button class="btn w" data-a=wa>↗ Kirim Berita Acara WhatsApp</button><div class=row><button class="btn s" data-a=cp>📋 Salin</button><button class="btn s" data-a=ro>Buka lagi</button></div>`:`${shipCard(r)}<div class=card><label>Nama penerima (gudang)<input id=rc value="${esc(ME||r.recv||S.name)}" placeholder="Nama petugas gudang"${ME?' readonly':''}></label><button class=btn data-a=fn>✔ Selesaikan Penerimaan</button><div class=row><button class="btn s" data-a=sv>Simpan sementara</button><button class="btn d" data-a=del data-id=${r.id}>🗑 Hapus</button></div></div>`)}
-function ba(r){const L=r.items.map((l,i)=>{const[t]=ist(l);return `${i+1}. ${l.nm} : diminta ${l.qty}, diterima ${got(l)??0} ${l.unit} (${t})${l.note?' - '+l.note:''}`}),K=shorts(r);
-return `*BERITA ACARA PENERIMAAN PACKAGING*\nNo Permintaan: ${r.no}\n${r.spk.length?'SPK: '+r.spk.join(', ')+'\n':''}Pemohon: ${r.by||'-'}\nTgl terima: ${fd(r.rdate||today())}\nPenerima (Gudang): ${r.recv||'-'}\n\n`+L.join('\n')+(K.length?'\n\n*KEKURANGAN*\n'+K.map(l=>`- ${l.nm}: kurang ${short(l)} ${l.unit}. Alasan: ${l.note||'-'}`).join('\n'):'')+(r.items.every(l=>ist(l)[1]==='gr')?'\n\nSemua item diterima sesuai.':'\n\nAda selisih, mohon ditindaklanjuti.')}
+function ba(r){const L=grpOf(r).map(G=>'*'+G.g+'*\n'+G.L.map((l,i)=>{const[t]=ist(l);return `${i+1}. ${l.nm} : diminta ${l.qty}, diterima ${got(l)??0} ${l.unit} (${t})${l.note?' - '+l.note:''}`}).join('\n')),K=shorts(r);
+return `*BERITA ACARA PENERIMAAN PACKAGING*\nNo Permintaan: ${r.no}\n${r.spk.length?'SPK: '+r.spk.join(', ')+'\n':''}Pemohon: ${r.by||'-'}\nTgl terima: ${fd(r.rdate||today())}\nPenerima (Gudang): ${r.recv||'-'}\n\n`+L.join('\n\n')+(K.length?'\n\n*KEKURANGAN*\n'+K.map(l=>`- ${l.nm}: kurang ${short(l)} ${l.unit}. Alasan: ${l.note||'-'}`).join('\n'):'')+(r.items.every(l=>ist(l)[1]==='gr')?'\n\nSemua item diterima sesuai.':'\n\nAda selisih, mohon ditindaklanjuti.')}
 function render(){const d=V.id,T=d?'Penerimaan':V.tab==='rek'?'Rekap Penerimaan':V.tab==='open'?'Menunggu Diterima':'Riwayat Penerimaan',nv=[['open','📦','Masuk'],['done','✔','Riwayat'],['rek','📊','Rekap']];
 $('#app').innerHTML=`<header>${d?'<button class=back data-a=bk>←</button>':''}<div class=hc><small>${CO}</small></div><button class=ava data-a=prof aria-label=Profil><img data-ava alt="" src="${avaSrc()}"></button><button class="mbh" id="mb" type="button" aria-label="Menu navigasi" aria-expanded="false"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button></header>${d?vDet():V.tab==='rek'?vRek():vList()}<nav><div>${nv.map(n=>`<button class="${!d&&V.tab===n[0]?'on':''}" data-a=tab data-v=${n[0]}><span>${n[1]}</span>${n[2]}</button>`).join('')}</div></nav>`}
 function add(L,quiet){if(!L.length)return
@@ -296,7 +301,7 @@ if(quiet){if(!V.id)render();tst('📦 '+m)}else{V.tab='open';V.id=null;render();
 /* Impor file .pmg (JSON) dari tombol "Kirim ke Gudang" di app permintaan */
 function fromFile(o){if(!o||o.format!=='pm-gudang')throw 0;
 return(Array.isArray(o.requests)?o.requests:[o]).map(q=>({id:'r'+uid(),no:String(q.no||'').trim(),date:q.date||today(),by:String(q.by||''),spk:(q.spk||[]).map(String),cust:Array.isArray(q.cust)?q.cust.join(', '):String(q.cust||''),note:String(q.note||''),status:'open',recv:'',rdate:'',at:Date.now(),
-items:(q.items||[]).map(l=>({id:uid(),nm:String(l.nm||'').trim(),unit:String(l.unit||'pcs').trim(),qty:num(l.qty),got:'',note:''})).filter(l=>l.nm&&l.qty>0)})).filter(r=>r.no&&r.items.length)}
+items:(q.items||[]).map(l=>({id:uid(),nm:String(l.nm||'').trim(),unit:String(l.unit||'pcs').trim(),qty:num(l.qty),grp:String(l.grp||'').trim(),got:'',note:''})).filter(l=>l.nm&&l.qty>0)})).filter(r=>r.no&&r.items.length)}
 async function impFiles(files){const L=[];let bad=0;for(const f of files){try{L.push(...fromFile(JSON.parse(await f.text())))}catch(e){bad++}}
 if(!L.length){tst('File tidak dikenali. Gunakan file dari tombol “Kirim ke Gudang”.');return}
 add(L);if(bad)setTimeout(()=>tst(bad+' file tidak dikenali, dilewati'),3300)}
@@ -324,7 +329,7 @@ const DB=((window.PMG_CONFIG||{}).dbUrl||'').replace(/\/+$/,''),KODE=(window.PMG
 let ES=null,pulling=false,again=false,PERR='';
 async function pull(manual){if(!DB){if(manual)tst('Alamat database belum diisi (config.js)');return}
 if(pulling){again=true;return}pulling=true;
-try{const res=await fetch(DB+'/inbox/'+KODE+'.json',{cache:'no-store'});if(!res.ok){PERR=(res.status===401||res.status===403)?'Ditolak server ('+res.status+'), login ulang':'Error server ('+res.status+')';throw new Error(res.status)}PERR='';
+try{await hsSync();const res=await fetch(DB+'/inbox/'+KODE+'.json',{cache:'no-store'});if(!res.ok){PERR=(res.status===401||res.status===403)?'Ditolak server ('+res.status+'), login ulang':'Error server ('+res.status+')';throw new Error(res.status)}PERR='';
 const o=(await res.json())||{},L=[],now=Date.now();
 for(const[k,v]of Object.entries(o)){if(!v||typeof v!=='object'||!v.sent)continue;
 if(now-Date.parse(v.sent)>30*864e5){fetch(DB+'/inbox/'+KODE+'/'+k+'.json',{method:'DELETE'}).catch(()=>{});continue}
@@ -336,6 +341,37 @@ finally{pulling=false;if(again){again=false;pull()}}}
 function listen(){if(ES){ES.close();ES=null}if(!DB||!window.EventSource)return;
 try{ES=new EventSource(DB+'/inbox/'+KODE+'.json');const h=()=>pull();ES.addEventListener('put',h);ES.addEventListener('patch',h)}catch(e){}}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)pull()});addEventListener('online',()=>{listen();pull()});setInterval(()=>pull(),60000);
+
+/* ===== Riwayat penerimaan bersama: penerimaan selesai disimpan di database, tampil di semua akun dan perangkat ===== */
+S.sy=S.sy||{};S.hs=S.hs||{ts:0};S.del=S.del||{};let hsBusy=false,hsTm=null;
+const hsUrl=q=>DB+'/terima/'+KODE+(q&&q[0]==='/'?q:'')+'.json'+(q&&q[0]==='?'?q:'');
+const hsSig=r=>r.at+'|'+(r.ship&&r.ship.ok?'k':'')+(r.ship&&r.ship.conf?r.ship.conf.at:'');
+const hsRec=r=>{const o={no:r.no,date:r.date,by:r.by||'',spk:r.spk||[],cust:r.cust||'',note:r.note||'',status:r.status,recv:r.recv||'',rdate:r.rdate||'',at:r.at,items:r.items.map(l=>({nm:l.nm,unit:l.unit,qty:l.qty,grp:l.grp||'',got:l.got,note:l.note||''})),ts:{'.sv':'timestamp'}};if(r.ship&&r.ship.ok)o.ship={sent:r.ship.sent,loc:r.ship.loc||'',ok:true,conf:r.ship.conf||null};return o};
+const hsDirty=()=>{const L=[];S.reqs.forEach(r=>{const k=sid(r.no);if((r.status==='done'||S.sy[k]!==undefined)&&S.sy[k]!==hsSig(r))L.push(['r',r])});Object.keys(S.del).forEach(k=>{if(S.sy[k]!=='d'+S.del[k])L.push(['d',k])});return L};
+async function hsPush(){let n=0;for(const[t,x]of hsDirty()){try{if(t==='r'){const res=await fetch(hsUrl('/'+sid(x.no)),{method:'PUT',body:JSON.stringify(hsRec(x))});if(!res.ok)throw 0;S.sy[sid(x.no)]=hsSig(x)}else{const res=await fetch(hsUrl('/'+x),{method:'PUT',body:JSON.stringify({del:1,at:S.del[x],ts:{'.sv':'timestamp'}})});if(!res.ok)throw 0;S.sy[x]='d'+S.del[x]}n++}catch(e){return n}}return n}
+async function hsPull(){const st=S.hs.ts?S.hs.ts+1:Date.now()-120*864e5;
+const res=await fetch(hsUrl('?orderBy=%22ts%22&startAt='+Math.floor(st)),{cache:'no-store'});if(!res.ok)throw new Error(res.status);
+const o=(await res.json())||{};let ch=0;
+for(const[k,v]of Object.entries(o)){if(!v||typeof v!=='object')continue;S.hs.ts=Math.max(S.hs.ts,+v.ts||0);
+const i=S.reqs.findIndex(r=>sid(r.no)===k),x=i>=0?S.reqs[i]:null;
+if(v.del){if(S.del[k]===undefined||S.del[k]<v.at)S.del[k]=v.at;S.sy[k]='d'+v.at;if(x&&(+x.at||0)<=v.at){S.reqs.splice(i,1);ch++}continue}
+if(S.del[k]!==undefined&&S.del[k]>=(+v.at||0))continue;
+if(!v.no||!Array.isArray(v.items))continue;
+const nw=Object.assign({},v);delete nw.ts;nw.spk=nw.spk||[];nw.items=nw.items.map(l=>Object.assign({id:uid()},l,{got:l.got==null?'':l.got,note:l.note||''}));
+if(!x){if(v.status!=='done')continue;nw.id='r'+uid();if(v.ship&&v.ship.ok)nw.ship={sent:v.ship.sent,loc:v.ship.loc||'',ok:true,conf:v.ship.conf||undefined,th:[]};else delete nw.ship;S.reqs.push(nw);S.sy[k]=hsSig(nw);ch++;continue}
+if(v.ship&&v.ship.ok&&(!x.ship||(x.ship.ok&&v.ship.conf&&!x.ship.conf))){x.ship=Object.assign({th:[]},x.ship||{},{sent:v.ship.sent,loc:v.ship.loc||'',ok:true,conf:v.ship.conf||x.ship&&x.ship.conf||undefined});ch++}
+if(v.at>(+x.at||0)||(v.status==='done'&&x.status!=='done'&&!cnt(x))){const keep={id:x.id,ship:x.ship};Object.assign(x,nw,keep);if(!keep.ship)delete x.ship;ch++}
+S.sy[k]=hsSig(x)}
+if(ch)S.reqs.sort((a,b)=>(+b.at||0)-(+a.at||0));
+return ch}
+async function hsSync(manual){if(!DB||hsBusy)return;hsBusy=true;
+try{const pushed=await hsPush();const ch=await hsPull();if(ch||pushed)save();
+if(ch&&!V.sheet&&!/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement||{}).tagName||''))render();
+if(manual)tst(ch?'✔ '+ch+' riwayat diperbarui':'Riwayat sudah terbaru')}
+catch(e){if(manual)tst('Gagal terhubung. Cek internet.')}
+finally{hsBusy=false}}
+window.HSK=()=>{if(!DB||hsBusy)return;if(!hsDirty().length)return;clearTimeout(hsTm);hsTm=setTimeout(()=>hsSync(),1500)};
+setInterval(()=>{if(!document.hidden)hsSync()},45000);setTimeout(hsSync,600);
 const lt=()=>S.last?new Date(S.last).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}):'-';
 async function boot(){render();setTimeout(()=>{listen();pull()},300);
 if(new URLSearchParams(location.search).get('shared')){try{const c=await caches.open('pmg-share'),h=await c.match('shared/count'),n=h?+(await h.text()):0,fs=[];for(let i=0;i<n;i++){const r=await c.match('shared/'+i);if(r)fs.push(new File([await r.blob()],'x.pmg'))}await caches.delete('pmg-share');history.replaceState(null,'',location.pathname);if(fs.length)impFiles(fs)}catch(e){}}
@@ -373,8 +409,8 @@ else if(a==='fn'){collect(r);if(!r.recv){tst('Isi nama penerima');return}
 const u=r.items.find(l=>got(l)===null);if(u){tst('Isi jumlah diterima untuk '+u.nm+' (isi 0 jika tidak datang)');const x=document.querySelector('[data-g="'+u.id+'"]');if(x){x.scrollIntoView({block:'center'});x.focus()}return}
 const m=r.items.find(req);if(m){tst('Isi keterangan kenapa kurang: '+m.nm);const x=document.querySelector('[data-n="'+m.id+'"]');if(x){x.classList.add('req');x.scrollIntoView({block:'center'});x.focus()}return}
 const k=shorts(r).length;if(k&&!confirm(k+' item kurang jumlahnya. Selesaikan penerimaan dengan kekurangan?'))return;r.status='done';r.rdate=today();r.at=Date.now();save();render();tst(k?'Penerimaan selesai (ada kekurangan)':'Penerimaan selesai')}
-else if(a==='ro'){r.status='open';save();render()}
-else if(a==='del'){if(confirm('Hapus permintaan ini dari gudang?')){S.reqs=S.reqs.filter(x=>x.id!==r.id);V.id=null;save();render()}}
+else if(a==='ro'){r.status='open';r.at=Date.now();save();render()}
+else if(a==='del'){if(confirm('Hapus permintaan ini dari gudang?')){S.reqs=S.reqs.filter(x=>x.id!==r.id);S.del=S.del||{};S.del[sid(r.no)]=Date.now();V.id=null;save();render()}}
 else if(a==='cp'){try{await navigator.clipboard.writeText(ba(r));tst('Disalin')}catch(x){tst('Gagal menyalin')}}
 else if(a==='wa'){const t=ba(r);if(navigator.share&&/Android|iPhone|iPad/i.test(navigator.userAgent))navigator.share({text:t}).catch(()=>{});else window.open('https://api.whatsapp.com/send?text='+encodeURIComponent(t),'_blank')}});
 boot();if('serviceWorker'in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
